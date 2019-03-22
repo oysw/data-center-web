@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>数据中心</title>
+</head>
+<body>
+<h1 align="center">欢迎光临数据中心</h1>
+<form enctype="multipart/form-data" action="/upload/" method="post" style="padding: 10px">
+    {% csrf_token %}
+    x:<input type="file" name="x_file" style="padding: 10px"><br>
+    y:<input type="file" name="y_file" style="padding: 10px;"><br>
+    <input type="submit" value="提交" style="padding: 10px">
+</form>
+</body>
+</html>
