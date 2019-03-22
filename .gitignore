@@ -158,3 +158,12 @@ fabric.properties
 # Editor-based Rest Client
 .idea/httpRequests
 
+.idea/ai4chem.iml
+.idea/dataSources.xml
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/other.xml
+.idea/vcs.xml
+datacenter/static/
+templates/
