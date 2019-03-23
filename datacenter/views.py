@@ -1,6 +1,5 @@
 # coding:utf-8
 
-from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import render
 # Create your views here.
@@ -14,5 +13,6 @@ def calc(request):
         x = request.FILES.get('x_file', None)
         y = request.FILES.get('y_file', None)
 
-        core.file_read(x, y)
-        return HttpResponse('Upload complete!')
+        result = core.file_read(x, y)
+
+        return render(request, 'result.html', result)

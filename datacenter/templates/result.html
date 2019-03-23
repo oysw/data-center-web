@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block title %}数据中心{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="form-group">
+        <p class="help-block">
+            {{ linear_reg }}<br>
+            {{ decision_tree }}<br>
+            {{ nearest_nei }}<br>
+            {{ random_for }}<br>
+        </p>
+    </div>
+{% endblock %}
