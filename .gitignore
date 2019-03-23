@@ -165,5 +165,3 @@ fabric.properties
 .idea/modules.xml
 .idea/other.xml
 .idea/vcs.xml
-datacenter/static/
-templates/
