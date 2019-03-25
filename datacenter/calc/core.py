@@ -14,14 +14,11 @@ def linear_regression(x, y):
     return result
 
 def nearest_neighbors_calc(x, y):
-    k = 15
-    weight = 'uniform'
-    result = nearest_neighbors.calc(x, y, k, weight)
+    result = nearest_neighbors.calc(x, y)
     return result
 
 def random_forests_calc(x, y):
-    n = 10
-    result = random_forests.calc(x, y, n)
+    result = random_forests.calc(x, y)
     return result
 
 def auto_ml(x, y):
