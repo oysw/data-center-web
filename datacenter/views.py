@@ -14,5 +14,5 @@ def calc(request):
         y = request.FILES.get('y_file', None)
 
         result = core.file_read(x, y)
-
+        print(result)
         return render(request, 'result.html', result)

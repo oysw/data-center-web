@@ -5,29 +5,18 @@ from . import linear
 from . import nearest_neighbors
 from . import random_forests
 
-def decision_tree_calc(x, y):
-    result = decision_trees.calc(x, y)
-    return result
-
-def linear_regression(x, y):
-    result = linear.calc(x, y)
-    return result
-
-def nearest_neighbors_calc(x, y):
-    result = nearest_neighbors.calc(x, y)
-    return result
-
-def random_forests_calc(x, y):
-    result = random_forests.calc(x, y)
-    return result
-
 def auto_ml(x, y):
-    result = {}
-    result.update(linear_reg=linear_regression(x, y))
-    result.update(decision_tree=decision_tree_calc(x, y))
-    result.update(nearest_nei=nearest_neighbors_calc(x, y))
-    result.update(random_for=random_forests_calc(x, y))
-    return result
+    linear_reg = linear.calc(x, y)
+    l_score = linear_reg
+    decision_trees_reg = decision_trees.calc(x, y)
+    dt_score = decision_trees_reg['trials'].losses()[-1]
+    nearest_neighbors_reg = nearest_neighbors.calc(x, y)
+    nn_score = nearest_neighbors_reg['trials'].losses()[-1]
+    random_forests_reg = random_forests.calc(x, y)
+    rf_score = random_forests_reg['trials'].losses()[-1]
+    score = [l_score, dt_score, nn_score, rf_score]
+    best = score.index(min(score))
+    return [linear_reg, decision_trees_reg, nearest_neighbors_reg, random_forests_reg][best]
 
 def file_read(x, y):
     data_x = np.load(x)

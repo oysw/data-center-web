@@ -8,7 +8,7 @@ y = 0
 def f(params):
     params['n_estimators'] = int(params['n_estimators'])
     reg = RandomForestRegressor(**params)
-    acc = cross_val_score(reg, x, y, cv=2).mean()
+    acc = cross_val_score(reg, x, y, cv=2, n_jobs=-1).mean()
     return {'loss': -acc, 'status': STATUS_OK}
 
 def calc(data_x, data_y):
