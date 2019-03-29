@@ -94,7 +94,4 @@ def calc(data_x, data_y):
         best = best_dis
         img = img_dis
 
-    print(trials)
-    print(best)
-    print(img)
     return {"best": best, "trials": trials, "image": img}

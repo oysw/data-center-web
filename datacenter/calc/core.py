@@ -7,7 +7,7 @@ from . import random_forests
 
 def auto_ml(x, y):
     linear_reg = linear.calc(x, y)
-    l_score = linear_reg
+    l_score = linear_reg['loss']
     decision_trees_reg = decision_trees.calc(x, y)
     dt_score = decision_trees_reg['trials'].losses()[-1]
     nearest_neighbors_reg = nearest_neighbors.calc(x, y)
