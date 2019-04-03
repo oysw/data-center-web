@@ -1,0 +1,16 @@
+{% extends 'datacenter/base.html' %}
+{% load staticfiles %}
+{% block title %}数据中心{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'datacenter/css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="form-group">
+        <p class="help-block">
+            {{ best }}<br>
+            {{ trials }}<br>
+            <img src="{{ image }}"><br>
+        </p>
+    </div>
+{% endblock %}

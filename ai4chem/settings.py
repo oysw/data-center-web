@@ -25,7 +25,7 @@ SECRET_KEY = '0!&za6*bj$6x-ae9+mx$t-&u3hmwf5cgqz4_n2$9p4*4e-c%r*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*',]
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'datacenter',
+    'account',
 ]
 
 MIDDLEWARE = [
@@ -75,10 +76,23 @@ WSGI_APPLICATION = 'ai4chem.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+# 默认使用的sqlite数据库
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# }
+
+#mysql
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'datacloud',
+        'USER': 'user',
+        'PASSWORD': 'chem123456',
+        'HOST': '212.64.101.178',
+        'PORT': '3306',
     }
 }
 
@@ -120,3 +134,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# 登录地址
+LOGIN_URL = '/account/login/'

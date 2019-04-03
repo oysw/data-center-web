@@ -1,13 +1,14 @@
 # coding:utf-8
-
-from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 # Create your views here.
 from .calc import core
 
+@login_required
 def index(request):
-    return render(request, 'index.html')
+    return render(request, 'datacenter/index.html')
 
+@login_required
 def calc(request):
     if request.method == 'POST':
         x = request.FILES.get('x_file', None)
@@ -15,4 +16,5 @@ def calc(request):
 
         result = core.file_read(x, y)
         print(result)
-        return render(request, 'result.html', result)
+        return render(request, 'datacenter/result.html', result)
+
