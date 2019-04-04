@@ -2,7 +2,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 # Create your views here.
-from .calc import core
+from datacenter.calc import core
 
 @login_required
 def index(request):
