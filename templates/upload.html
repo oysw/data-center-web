@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block title %}数据中心{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'web/css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+    <div style="height: 70px"></div>
+        <div class="col-md-4 col-md-offset-4">
+            <form enctype="multipart/form-data" class='form-login' action="/upload/" method="post">
+                {% csrf_token %}
+                <h2 class="text-center">Please Upload the file</h2>
+                <div style="height: 30px"></div>
+                <div class="form-group">
+                    <label for="id_username">X_axis file：</label>
+                    <input type="file" name='x_file'>
+                </div>
+                <div class="form-group">
+                    <label for="id_password">Y_axis file：</label>
+                    <input type="file" name='y_file'>
+                </div>
+                <button type="reset" style="margin: 0 5px 0 5px" class="btn btn-default pull-right">reset</button>
+                <button type="submit" class="btn btn-primary pull-right">calculate</button>
+            </form>
+        </div>
+    </div> <!-- /container -->
+{% endblock %}
