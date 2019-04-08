@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block title %}数据中心{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'web/css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div style="height: 80px"></div>
+            <div class="dsweb-form">
+                <h3 style="margin: 30px 0px 70px 0px; font-size: 36px">Welcome to Data Center</h3>
+                <a href="/register/">
+                    <button class="dsweb-button success">
+                        Register Now
+                    </button>
+                </a><br>
+                <a href="/login/">
+                    <button class="dsweb-button primary">
+                        Login
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div> <!-- /container -->
+{% endblock %}

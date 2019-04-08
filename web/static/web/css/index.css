@@ -1,0 +1,25 @@
+.dsweb-button{
+    margin: 15px;
+    width: 180px;
+    height: 36px;
+    color: #fff;
+    font-size: 15px;
+    letter-spacing: 1px;
+    border: 0;
+    outline: medium;
+
+
+}
+
+.primary{
+    background-color: #3385ff;
+}
+
+.success{
+    background-color: #59a628;
+}
+
+.dsweb-form{
+    text-align: center;
+    align-content: center;
+}
