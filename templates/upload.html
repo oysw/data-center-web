@@ -8,6 +8,7 @@
 {% block content %}
     <div class="container">
     <div style="height: 70px"></div>
+        <input id="success_msg" type="hidden" value="{{ success }}">
         <div class="col-md-4 col-md-offset-4">
             <form enctype="multipart/form-data" class='form-login' action="/upload/" method="post">
                 {% csrf_token %}
@@ -16,14 +17,25 @@
                 <div class="form-group">
                     <label for="id_username">X_axis file：</label>
                     <input type="file" name='x_file'>
+                    <span style="color: red">{{ x_error }}</span>
                 </div>
                 <div class="form-group">
                     <label for="id_password">Y_axis file：</label>
                     <input type="file" name='y_file'>
+                    <span style="color: red">{{ y_error }}</span>
                 </div>
                 <button type="reset" style="margin: 0 5px 0 5px" class="btn btn-default pull-right">reset</button>
                 <button type="submit" class="btn btn-primary pull-right">calculate</button>
             </form>
         </div>
     </div> <!-- /container -->
+    <script src="{% static 'web/js/jquery-3.3.1.min.js' %}"></script>
+    <script>
+    $(document).ready(function () {
+        var success_msg = $("#success_msg").val();
+        if (success_msg != ''){
+            alert(success_msg)
+        }
+    })
+    </script>
 {% endblock %}
