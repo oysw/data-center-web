@@ -87,7 +87,7 @@ DATABASES = {
         "ENGINE": 'django.db.backends.mysql',
         "HOST": '127.0.0.1',
         "PORT": '3306',
-        "NAME": 'datacloud',
+        "NAME": 'datacloud_web',
         "USER": 'root',
         "PASSWORD": 'chem123456',
     }
@@ -117,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
