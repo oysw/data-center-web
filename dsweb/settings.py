@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'web',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -87,7 +87,7 @@ DATABASES = {
         "ENGINE": 'django.db.backends.mysql',
         "HOST": '127.0.0.1',
         "PORT": '3306',
-        "NAME": 'datacloud_web',
+        "NAME": 'data_cloud',
         "USER": 'root',
         "PASSWORD": 'chem123456',
     }

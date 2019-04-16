@@ -2,10 +2,7 @@ from django.shortcuts import render
 from django.contrib import auth
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-
-import numpy as np
-import time
-import os
+from core.models import Job
 # Create your views here.
 
 
@@ -64,15 +61,11 @@ def upload(request):
     if y_file is None:
         return render(request, 'upload.html', {'y_error': 'Please choose a file!'})
 
-    dir_name = '/tmp/ai4chem/media/cal_file/'
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    file_name = str(int(time.time())) + '_x_' + request.session['username']
-    x_file = np.load(x_file)
-    np.save(dir_name + file_name, x_file)
-    file_name = str(int(time.time())) + '_y_' + request.session['username']
-    y_file = np.load(y_file)
-    np.save(dir_name + file_name, y_file)
+    Job.objects.create(
+        owner=request.session['username'],
+        x_file=x_file,
+        y_file=y_file,
+    )
     return render(request, 'upload.html', {'success': 'Job submits successfully!'})
 
 
