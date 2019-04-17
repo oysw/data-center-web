@@ -3,6 +3,7 @@ from django.contrib import auth
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from core.models import Job
+from core.tools import upload_to_center
 # Create your views here.
 
 
@@ -66,6 +67,7 @@ def upload(request):
         x_file=x_file,
         y_file=y_file,
     )
+    upload_to_center()
     return render(request, 'upload.html', {'success': 'Job submits successfully!'})
 
 

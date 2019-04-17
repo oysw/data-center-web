@@ -133,3 +133,11 @@ STATIC_URL = '/static/'
 
 # Media root
 MEDIA_ROOT = '/tmp/ai4chem/'
+
+# Center address
+DATA_CENTER = {
+    'hostname': '192.168.1.9',
+    'username': 'oysw',
+    'port': 22,
+    'password': '1996'
+}
