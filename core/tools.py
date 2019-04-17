@@ -17,7 +17,7 @@ def upload_to_center():
     pattern = re.compile("No such file or directory")
     if re.search(pattern, err):
         stdin, stdout, stderr = ssh.exec_command('mkdir -p ' + remote_file)
-        if stderr.read.decode('utf-8') != '':
+        if stderr.read().decode('utf-8') != '':
             return
     paramiko.SFTPClient.from_transport(ssh.get_transport())
     sftp = ssh.open_sftp()
