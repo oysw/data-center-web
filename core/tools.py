@@ -21,9 +21,10 @@ def upload_to_center():
             return
     paramiko.SFTPClient.from_transport(ssh.get_transport())
     sftp = ssh.open_sftp()
-    sftp.put(os.path.join(local_file, '*'), remote_file)
+    for f in os.listdir(local_file):
+        sftp.put(os.path.join(local_file, f), os.path.join(remote_file, f))
     ssh.close()
-    del_file(local_file)
+#    del_file(local_file)
     return
 
 
