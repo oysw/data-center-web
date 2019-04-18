@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from core.models import Job
 from core.tools import upload_to_center
+from django.utils.crypto import get_random_string
 # Create your views here.
 
 
@@ -62,6 +63,8 @@ def upload(request):
     if y_file is None:
         return render(request, 'upload.html', {'y_error': 'Please choose a file!'})
 
+    x_file.name = 'x_' + get_random_string(7) + '.npy'
+    y_file.name = 'y_' + get_random_string(7) + '.npy'
     Job.objects.create(
         owner=request.session['username'],
         x_file=x_file,
