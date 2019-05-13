@@ -1,9 +1,16 @@
+import base64
 from django.shortcuts import render
 from django.contrib import auth
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.http import JsonResponse
+
 from core.models import Job
+from sklearn.externals import joblib
+from core.tools import draw_pic
 from core.tools import upload_to_center
+from core.tools import download_to_web
+
 from django.utils.crypto import get_random_string
 # Create your views here.
 
@@ -80,3 +87,31 @@ def logout(request):
     except Exception:
         pass
     return render(request, 'index.html')
+
+
+def result(request):
+    if 'username' in request.session.keys():
+        return render(request, 'result.html', {'result': get_result(request.session['username'])})
+    else:
+        return render(request, "index.html")
+
+
+def draw(request):
+    if request.is_ajax():
+        option = request.POST
+        pic = draw_pic(option)
+        return JsonResponse({"image": pic})
+
+
+def get_result(username):
+    # download_to_web()
+    jobs = Job.objects.filter(owner=username, status='F')
+    for job in jobs:
+        # Model
+        try:
+            mod = job.mod.file
+            mod = joblib.load(mod)
+            job.mod = mod.__class__.__name__
+        except FileNotFoundError:
+            job.mod = ''
+    return jobs

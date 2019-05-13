@@ -19,10 +19,12 @@ from django.urls import path
 from core import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('login/', views.login, name='login'),
-    path('register/', views.register, name='register'),
-    path('upload/', views.upload, name='upload'),
-    path('logout/', views.logout, name='logout'),
+    path('', views.index),
+    path('login/', views.login),
+    path('register/', views.register),
+    path('upload/', views.upload),
+    path('logout/', views.logout),
+    path('result/', views.result),
+    path('draw/', views.draw),
     path('admin/', admin.site.urls),
 ]

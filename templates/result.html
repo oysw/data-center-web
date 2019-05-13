@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block title %}数据中心{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'web/css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: auto">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel"></h4>
+                </div>
+                <div class="modal-body">
+                    <form id="plotOptions">
+                        {% csrf_token %}
+                        <input id="modelId" name="id" type="hidden">
+                        <div class="row">
+                            <div class="col-lg-2">
+                                <label>title</label>
+                                <input class="form-control" name="title">
+                            </div>
+                            <div class="col-lg-2">
+                                <label>x_label</label>
+                                <input class="form-control" name="x_label">
+                            </div>
+                            <div class="col-lg-2">
+                                <label>y_label</label>
+                                <input class="form-control" name="y_label">
+                            </div>
+                            <div class="col-lg-2">
+                                <label>test_color</label>
+                                <select class="form-control" name="test_color">
+                                    <option value="black">Default</option>
+                                    <option value="blue">Blue</option>
+                                    <option value="yellow">Yellow</option>
+                                    <option value="green">Green</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2">
+                                <label>predict_color</label>
+                                <select class="form-control" name="predict_color">
+                                    <option value="black">Default</option>
+                                    <option value="blue">Blue</option>
+                                    <option value="yellow">Yellow</option>
+                                    <option value="green">Green</option>
+                                </select>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="col-lg-1">
+                                <input class="btn btn-primary btn-block" type="button" onclick="show_image()" value="plot">
+                            </div>
+                        </div>
+                    </form>
+                    <img id="fit_image" onclick="save_fig(this)">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <a class="pull-right" style="margin: 5px" href="/result/">
+        <button class="btn btn-primary" type="button">Refresh</button>
+    </a>
+    <table class="table table-striped table-bordered">
+    <tr>
+        <th>Owner</th>
+        <th>Image</th>
+        <th>Submit Time</th>
+    </tr>
+        {% for job in result %}
+            <tr>
+                <td>{{ job.owner }}</td>
+                <td>
+                    {% if job.mod != '' %}
+                    <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#myModal" onclick="pre_plot(this)">
+                        {{ job.mod }}<input type="hidden" value="{{ job.id }}">
+                    </button>
+                    {% else %}
+                    <div>Not available</div>
+                    {% endif %}
+                </td>
+                <td>{{ job.create_time|date:"Y-m-d H:i:s" }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <script src="{% static 'web/js/jquery-3.3.1.min.js' %}"></script>
+    <script src="{% static 'web/js/html2canvas.min.js' %}"></script>
+    <script>
+    function pre_plot(ele) {
+        $('#fit_image').attr('src', '');
+        let ele_model_id = $('#modelId');
+        ele_model_id.val('');
+        $('#myModalLabel').html('Image');
+        let model_id = $(ele).children('input').val();
+        ele_model_id.val(model_id)
+    }
+
+    function show_image() {
+        let option = $("#plotOptions").serialize();
+        $.ajax({
+            url: "/draw/",
+            type: "POST",
+            data: option,
+            dataType:"JSON",
+            success: function (ret_val) {
+                $("#fit_image").attr('src', ret_val["image"]);
+            },
+            error: function (XMLHttpRequest, textStatus, msg) {
+                alert(msg)
+            }
+        })
+    }
+
+    function save_fig(ele) {
+        let image = $(ele).get(0);
+        html2canvas(image).then(function (canvas) {
+            let imgUrl = canvas.toDataURL("image/png");
+            let link = document.createElement("a");
+            link.download = new Date().getTime().toString() + ".png";
+            link.href = imgUrl;
+            link.click();
+        })
+    }
+    </script>
+{% endblock %}
