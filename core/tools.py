@@ -4,6 +4,7 @@ import paramiko
 import base64
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from io import BytesIO
 from sklearn.externals import joblib
 from dsweb.settings import DATA_CENTER
@@ -67,19 +68,73 @@ def del_file(path):
             os.remove(f_path)
 
 
-def draw_pic(option):
+def draw_pic(request):
+    option = request.POST
+    print(option)
     model_id = option["id"]
     job = Job.objects.get(id=model_id)
+    x = np.load(job.x_file.file)
+    y = np.load(job.y_file.file)
     mod = joblib.load(job.mod.file)
 
-    x_test = np.load(job.x_file.file)
-    y_pred = mod.predict(x_test)
+    if option["chooseData"] == '1':
+        x_test = x
+        y_pred = mod.predict(x_test)
+
+    elif option["chooseData"] == '2':
+        file = request.FILES.get("x_test")
+        x_test = np.load(file)
+        try:
+            y_pred = mod.predict(x_test)
+        except ValueError as e:
+            return "", e.args[0]
+    else:
+        x_test = x
+        y_pred = y
+
+    if option["featureNum"] == '1':
+        return draw_pic_2d(option, x, y, x_test, y_pred)
+    elif option["featureNum"] == '2':
+        return draw_pic_3d(option, x, y, x_test, y_pred)
+    else:
+        return ""
+
+
+def draw_pic_2d(option, x, y, x_test, y_pred):
+    x_test = x_test[:, int(option["feature_1"]) - 1].reshape(-1, 1)
+    x = x[:, int(option["feature_1"]) - 1].reshape(-1, 1)
 
     plt.figure()
     plt.title(option["title"])
     plt.xlabel(option["x_label"])
     plt.ylabel(option["y_label"])
-    plt.scatter(x_test, y_pred, c=option["predict_color"])
+    if option['raw_color'] != 'none':
+        plt.scatter(x, y, c=option["raw_color"])
+    if option['predict_color'] != 'none':
+        plt.scatter(x_test, y_pred, c=option["predict_color"])
+
+    buffer = BytesIO()
+    plt.savefig(buffer)
+    img = buffer.getvalue()
+    imb = base64.b64encode(img)
+    ims = imb.decode()
+    imd = "data:image/png;base64," + ims
+    return imd
+
+
+def draw_pic_3d(option, x, y, x_test, y_pred):
+    x_test_1 = x_test[:, int(option["feature_1"]) - 1].reshape(-1, 1)
+    x_test_2 = x_test[:, int(option["feature_2"]) - 1].reshape(-1, 1)
+    x_1 = x[:, int(option["feature_1"]) - 1].reshape(-1, 1)
+    x_2 = x[:, int(option["feature_2"]) - 1].reshape(-1, 1)
+
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    ax.set_title(option["title"])
+    if option['raw_color'] != 'none':
+        ax.scatter(x_1, x_2, y, c=option["raw_color"])
+    if option['predict_color'] != 'none':
+        ax.scatter(x_test_1, x_test_2, y_pred, c=option["predict_color"])
 
     buffer = BytesIO()
     plt.savefig(buffer)

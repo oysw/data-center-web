@@ -1,4 +1,4 @@
-import base64
+import numpy as np
 from django.shortcuts import render
 from django.contrib import auth
 from django.contrib.auth import authenticate
@@ -98,9 +98,27 @@ def result(request):
 
 def draw(request):
     if request.is_ajax():
-        option = request.POST
-        pic = draw_pic(option)
-        return JsonResponse({"image": pic})
+        if request.method == "POST":
+            pic = draw_pic(request)
+            if type(pic) is tuple:
+                return JsonResponse({"image": pic[0], "err": pic[1]})
+            return JsonResponse({"image": pic, "err": ""})
+
+
+def data_detail(request):
+    if request.method == "GET":
+        data = request.GET
+        model_id = int(data["model_id"])
+        try:
+            job = Job.objects.get(id=model_id)
+            x = np.load(job.x_file.file)
+            return JsonResponse({"num": x.shape[1]})
+        except Job.DoesNotExist:
+            return JsonResponse({"num": 0})
+    if request.method == "POST":
+        file = request.FILES.get("x_test")
+        num = np.load(file).shape[1]
+        return JsonResponse({"num": num})
 
 
 def get_result(username):

@@ -14,12 +14,12 @@
                     <h4 class="modal-title" id="myModalLabel"></h4>
                 </div>
                 <div class="modal-body">
-                    <form id="plotOptions">
+                    <form id="plotOptions" enctype="multipart/form-data" class="col-lg-offset-1">
                         {% csrf_token %}
                         <input id="modelId" name="id" type="hidden">
                         <div class="row">
-                            <div class="col-lg-2">
-                                <label>title</label>
+                            <div class="col-lg-3">
+                                <label>Title</label>
                                 <input class="form-control" name="title">
                             </div>
                             <div class="col-lg-2">
@@ -30,33 +30,68 @@
                                 <label>y_label</label>
                                 <input class="form-control" name="y_label">
                             </div>
-                            <div class="col-lg-2">
-                                <label>test_color</label>
-                                <select class="form-control" name="test_color">
-                                    <option value="black">Default</option>
+                            <div class="col-lg-1">
+                                <label>Raw_color</label>
+                                <select class="form-control" name="raw_color">
+                                    <option value="none">None</option>
+                                    <option value="black">Black</option>
                                     <option value="blue">Blue</option>
                                     <option value="yellow">Yellow</option>
                                     <option value="green">Green</option>
                                 </select>
                             </div>
-                            <div class="col-lg-2">
-                                <label>predict_color</label>
+                            <div class="col-lg-1">
+                                <label>Predict_color</label>
                                 <select class="form-control" name="predict_color">
-                                    <option value="black">Default</option>
+                                    <option value="none">None</option>
+                                    <option value="black">Black</option>
                                     <option value="blue">Blue</option>
                                     <option value="yellow">Yellow</option>
                                     <option value="green">Green</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-2">
+                                <label>Data for graph</label>
+                                <select id="chooseData" name="chooseData" class="form-control" onchange="choose()">
+                                    <option value="0">Choose data</option>
+                                    <option value="1">Training data</option>
+                                    <option value="2">Upload new data</option>
+                                </select>
+                            </div>
+                            <div id="uploadData" class="col-lg-3" style="display: none">
+                                <label>x_test</label>
+                                <input class="form-control" name="x_test" type="file" onchange="uploadFeature(this)">
+                            </div>
+                            <div id="featureNum" class="col-lg-1" style="display: none">
+                                <label>Feature_N</label>
+                                <select name="featureNum" class="form-control" onchange="showFeature(this)">
+                                    <option value="0">0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                </select>
+                            </div>
+                            <div id="feature_1" class="col-lg-2" style="display: none">
+                                <label>Features_1</label>
+                                <select name="feature_1" class="form-control"></select>
+                            </div>
+                            <div id="feature_2" class="col-lg-2" style="display: none">
+                                <label>Features_2</label>
+                                <select name="feature_2" class="form-control"></select>
                             </div>
                         </div>
                         <br>
                         <div class="row">
                             <div class="col-lg-1">
-                                <input class="btn btn-primary btn-block" type="button" onclick="show_image()" value="plot">
+                                <input class="btn btn-primary btn-block" type="button" onclick="showImage()" value="plot">
+                            </div>
+                            <div class="col-lg-1">
+                                <input class="btn btn-danger btn-block" type="reset" value="reset">
                             </div>
                         </div>
                     </form>
-                    <img id="fit_image" onclick="save_fig(this)">
+                    <img id="fitImage" onclick="saveFig(this)">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -78,7 +113,7 @@
                 <td>{{ job.owner }}</td>
                 <td>
                     {% if job.mod != '' %}
-                    <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#myModal" onclick="pre_plot(this)">
+                    <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#myModal" onclick="prePlot(this)">
                         {{ job.mod }}<input type="hidden" value="{{ job.id }}">
                     </button>
                     {% else %}
@@ -92,24 +127,120 @@
     <script src="{% static 'web/js/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'web/js/html2canvas.min.js' %}"></script>
     <script>
-    function pre_plot(ele) {
-        $('#fit_image').attr('src', '');
-        let ele_model_id = $('#modelId');
-        ele_model_id.val('');
+    {#clean the page before create graph#}
+    function prePlot(ele) {
+        $('#fitImage').attr('src', '');
+        let eleModelId = $('#modelId');
+        eleModelId.val('');
         $('#myModalLabel').html('Image');
-        let model_id = $(ele).children('input').val();
-        ele_model_id.val(model_id)
+        let modelId = $(ele).children('input').val();
+        eleModelId.val(modelId)
     }
 
-    function show_image() {
-        let option = $("#plotOptions").serialize();
+    {#Choose the data to create graph#}
+    function choose() {
+        let data = $("#chooseData").val();
+        if (data == "1") {
+            $("#featureNum").removeAttr("style");
+            $("#uploadData").attr("style", "display:none");
+            $("#feature_1").attr("style", "display:none");
+            $("#feature_2").attr("style", "display:none");
+
+            $.ajax({
+                url: "/detail?model_id=" + $("#modelId").val(),
+                type: "GET",
+                success: function (retVal) {
+                    let num = Number(retVal["num"]);
+                    createFeatureList(num)
+                }
+            })
+        }
+        else if (data == "2"){
+            $("#featureNum").removeAttr("style");
+            $("#uploadData").removeAttr("style");
+            $("#feature_1").attr("style", "display:none");
+            $("#feature_2").attr("style", "display:none");
+        }
+        else {
+            $("#featureNum").attr("style", "display:none");
+            $("#uploadData").attr("style", "display:none");
+            $("#feature_1").attr("style", "display:none");
+            $("#feature_2").attr("style", "display:none");
+        }
+    }
+
+    {#Get the shape of upload file#}
+    function uploadFeature(ele){
+        let file = ele.files[0];
+        let formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('x_test', file);
+        $.ajax({
+            url: "/detail/",
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (retVal) {
+                let num = Number(retVal["num"]);
+                createFeatureList(num)
+            }
+        })
+    }
+
+    {#Create features list according to the shape of test set#}
+    function createFeatureList(num) {
+        let html_str = "";
+        for (let i = 1; i <= num; i++){
+            let str = '<option value=' + i + '>feature ' + i + '</option>';
+            html_str += str
+        }
+        $("#feature_1").children("select").html(html_str);
+        $("#feature_2").children("select").html(html_str);
+    }
+
+    {#Show the options based on feature number#}
+    function showFeature(ele) {
+        let num = $(ele).val();
+        if (num == "1"){
+            $("#feature_2").attr("style", "display:none");
+            $("#feature_1").removeAttr("style")
+        }
+        else if (num == "2"){
+            $("#feature_1").removeAttr("style");
+            $("#feature_2").removeAttr("style")
+        }
+        else {
+            $("#feature_1").attr("style", "display:none");
+            $("#feature_2").attr("style", "display:none")
+        }
+    }
+
+    {#Draw the graph#}
+    function showImage() {
+        let obj = $("#plotOptions").serializeArray();
+        let formData = new FormData();
+        $.each(obj, function (i, field) {
+            formData.append(field["name"], field["value"])
+        });
+        let file = $("#uploadData").children("input")[0].files[0];
+        if (typeof(file) != "undefined"){
+            formData.append("x_test", file)
+        }
         $.ajax({
             url: "/draw/",
             type: "POST",
-            data: option,
+            data: formData,
             dataType:"JSON",
-            success: function (ret_val) {
-                $("#fit_image").attr('src', ret_val["image"]);
+            contentType: false,
+            processData: false,
+            success: function (retVal) {
+                if (retVal["err"] != ""){
+                    alert(retVal["err"])
+                }
+                else {
+                    $("#fitImage").attr('src', retVal["image"]);
+                }
             },
             error: function (XMLHttpRequest, textStatus, msg) {
                 alert(msg)
@@ -117,7 +248,8 @@
         })
     }
 
-    function save_fig(ele) {
+    {#Save the graph#}
+    function saveFig(ele) {
         let image = $(ele).get(0);
         html2canvas(image).then(function (canvas) {
             let imgUrl = canvas.toDataURL("image/png");
