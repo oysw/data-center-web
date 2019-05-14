@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'dsweb.wsgi.application'
 DATABASES = {
     'default': {
         "ENGINE": 'django.db.backends.mysql',
-        "HOST": '127.0.0.1',
+        "HOST": '192.168.1.3',
         "PORT": '3306',
         "NAME": 'data_cloud',
         "USER": 'root',

@@ -42,13 +42,14 @@ def download_to_web():
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(**DATA_CENTER)
     stdin, stdout, stderr = ssh.exec_command('ls ' + remote_file)
-    if stdout.read().decode('utf-8') == "":
+    file_list = stdout.read().decode('utf-8')
+    if file_list == "":
         return
     try:
         os.makedirs(local_file)
     except FileExistsError:
         pass
-    remote_file_list = stdout.read().decode('utf-8').rstrip("\n").split("\n")
+    remote_file_list = file_list.rstrip("\n").split("\n")
     paramiko.SFTPClient.from_transport(ssh.get_transport())
     sftp = ssh.open_sftp()
     for f in remote_file_list:
