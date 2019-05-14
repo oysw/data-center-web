@@ -2,11 +2,11 @@ import re
 import os
 import paramiko
 import base64
+import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from io import BytesIO
-from sklearn.externals import joblib
 from dsweb.settings import DATA_CENTER
 from dsweb.settings import MEDIA_ROOT
 from core.models import Job
@@ -83,7 +83,10 @@ def draw_pic(request):
 
     elif option["chooseData"] == '2':
         file = request.FILES.get("x_test")
-        x_test = np.load(file)
+        try:
+            x_test = np.load(file)
+        except TypeError:
+            return "", "Please upload a file"
         try:
             y_pred = mod.predict(x_test)
         except ValueError as e:

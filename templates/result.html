@@ -10,7 +10,7 @@
         <div class="modal-dialog" style="width: auto">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="closeWindow()">&times;</button>
                     <h4 class="modal-title" id="myModalLabel"></h4>
                 </div>
                 <div class="modal-body">
@@ -66,7 +66,7 @@
                             </div>
                             <div id="featureNum" class="col-lg-1" style="display: none">
                                 <label>Feature_N</label>
-                                <select name="featureNum" class="form-control" onchange="showFeature(this)">
+                                <select id="featureSelect" name="featureNum" class="form-control" onchange="showFeature(this)">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -87,7 +87,7 @@
                                 <input class="btn btn-primary btn-block" type="button" onclick="showImage()" value="plot">
                             </div>
                             <div class="col-lg-1">
-                                <input class="btn btn-danger btn-block" type="reset" value="reset">
+                                <input id="reset" class="btn btn-danger btn-block" type="reset" value="reset" onclick="clean()">
                             </div>
                         </div>
                     </form>
@@ -140,11 +140,19 @@
     {#Choose the data to create graph#}
     function choose() {
         let data = $("#chooseData").val();
+        let featureNum = $("#featureNum");
+        let featureSelect = $("#featureSelect");
+        let feature_1 = $("#feature_1");
+        let feature_2 = $("#feature_2");
         if (data == "1") {
-            $("#featureNum").removeAttr("style");
+            featureNum.removeAttr("style");
+            featureSelect.val("0");
             $("#uploadData").attr("style", "display:none");
-            $("#feature_1").attr("style", "display:none");
-            $("#feature_2").attr("style", "display:none");
+
+            feature_1.attr("style", "display:none");
+            feature_1.children("select").html("");
+            feature_2.attr("style", "display:none");
+            feature_2.children("select").html("");
 
             $.ajax({
                 url: "/detail?model_id=" + $("#modelId").val(),
@@ -156,16 +164,22 @@
             })
         }
         else if (data == "2"){
-            $("#featureNum").removeAttr("style");
+            featureNum.removeAttr("style");
+            featureSelect.val("0");
             $("#uploadData").removeAttr("style");
-            $("#feature_1").attr("style", "display:none");
-            $("#feature_2").attr("style", "display:none");
+            feature_1.attr("style", "display:none");
+            feature_1.children("select").html("");
+            feature_2.attr("style", "display:none");
+            feature_2.children("select").html("");
         }
         else {
-            $("#featureNum").attr("style", "display:none");
+            featureNum.attr("style", "display:none");
+            featureSelect.val("0");
             $("#uploadData").attr("style", "display:none");
-            $("#feature_1").attr("style", "display:none");
-            $("#feature_2").attr("style", "display:none");
+            feature_1.attr("style", "display:none");
+            feature_1.children("select").html("");
+            feature_2.attr("style", "display:none");
+            feature_2.children("select").html("");
         }
     }
 
@@ -258,6 +272,23 @@
             link.href = imgUrl;
             link.click();
         })
+    }
+
+    function clean() {
+        $("#featureNum").attr("style", "display:none");
+        $("#featureSelect").val("0");
+        $("#uploadData").attr("style", "display:none");
+        let feature_1 = $("#feature_1");
+        let feature_2 = $("#feature_2");
+        feature_1.attr("style", "display:none");
+        feature_1.children("select").html("");
+        feature_2.attr("style", "display:none");
+        feature_2.children("select").html("");
+    }
+
+    function closeWindow() {
+        $("#reset").click();
+        clean();
     }
     </script>
 {% endblock %}

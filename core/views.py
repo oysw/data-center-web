@@ -1,4 +1,5 @@
 import numpy as np
+import joblib
 from django.shortcuts import render
 from django.contrib import auth
 from django.contrib.auth import authenticate
@@ -6,7 +7,6 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 
 from core.models import Job
-from sklearn.externals import joblib
 from core.tools import draw_pic
 from core.tools import upload_to_center
 from core.tools import download_to_web
