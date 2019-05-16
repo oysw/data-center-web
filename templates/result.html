@@ -159,7 +159,12 @@
                 type: "GET",
                 success: function (retVal) {
                     let num = Number(retVal["num"]);
-                    createFeatureList(num)
+                    if (num == -1) {
+
+                    }
+                    else {
+                        createFeatureList(num)
+                    }
                 }
             })
         }

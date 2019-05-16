@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'dsweb.wsgi.application'
 DATABASES = {
     'default': {
         "ENGINE": 'django.db.backends.mysql',
-        "HOST": '192.168.1.3',
+        "HOST": '192.168.1.9',
         "PORT": '3306',
         "NAME": 'data_cloud',
         "USER": 'root',
@@ -136,7 +136,7 @@ MEDIA_ROOT = '/tmp/ai4chem/'
 
 # Center address
 DATA_CENTER = {
-    'hostname': '192.168.1.3',
+    'hostname': '192.168.1.9',
     'username': 'oysw',
     'port': 22,
     'password': '1996'

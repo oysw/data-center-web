@@ -69,7 +69,6 @@ def upload(request):
         return render(request, 'upload.html', {'x_error': 'Please choose a file!'})
     if y_file is None:
         return render(request, 'upload.html', {'y_error': 'Please choose a file!'})
-
     x_file.name = 'x_' + get_random_string(7) + '.npy'
     y_file.name = 'y_' + get_random_string(7) + '.npy'
     Job.objects.create(
@@ -111,10 +110,11 @@ def data_detail(request):
         model_id = int(data["model_id"])
         try:
             job = Job.objects.get(id=model_id)
-            x = np.load(job.x_file.file)
-            return JsonResponse({"num": x.shape[1]})
         except Job.DoesNotExist:
             return JsonResponse({"num": 0})
+        x = np.load(job.x_file.file)
+        return JsonResponse({"num": x.shape[1]})
+
     if request.method == "POST":
         file = request.FILES.get("x_test")
         num = np.load(file).shape[1]

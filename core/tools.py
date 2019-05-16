@@ -109,13 +109,14 @@ def draw_pic_2d(option, x, y, x_test, y_pred):
     x = x[:, int(option["feature_1"]) - 1].reshape(-1, 1)
 
     plt.figure()
+    plt.grid(True)
     plt.title(option["title"])
     plt.xlabel(option["x_label"])
     plt.ylabel(option["y_label"])
     if option['raw_color'] != 'none':
-        plt.scatter(x, y, c=option["raw_color"])
+        plt.scatter(x, y, c=option["raw_color"], s=40, marker="^")
     if option['predict_color'] != 'none':
-        plt.scatter(x_test, y_pred, c=option["predict_color"])
+        plt.scatter(x_test, y_pred, c=option["predict_color"], s=10, marker="*")
 
     buffer = BytesIO()
     plt.savefig(buffer)
@@ -136,9 +137,9 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
     ax = Axes3D(fig)
     ax.set_title(option["title"])
     if option['raw_color'] != 'none':
-        ax.scatter(x_1, x_2, y, c=option["raw_color"])
+        ax.scatter(x_1, x_2, y, c=option["raw_color"], s=40)
     if option['predict_color'] != 'none':
-        ax.scatter(x_test_1, x_test_2, y_pred, c=option["predict_color"])
+        ax.scatter(x_test_1, x_test_2, y_pred, c=option["predict_color"], s=10)
 
     buffer = BytesIO()
     plt.savefig(buffer)
