@@ -1,15 +1,21 @@
+'''
+This file is used to process .xyz file to meet the shape requirement of auto_ml
+'''
 import re
 import os
-import numpy as np
 import pickle as pkl
+import numpy as np
 
 
 def preprocess(xyz_file):
+    '''
+    This function is used to transform .xyz file (Atom types and Atoms' coordinations). 
+    '''
     path = os.path.abspath(__file__)
     path = os.path.dirname(path)
     path = os.path.join(path, "periodic_table")
-    with open(path, "rb") as f:
-        periodic_table = pkl.load(f)
+    with open(path, "rb") as _f:
+        periodic_table = pkl.load(_f)
 
     p_table = {}
     for item in periodic_table:
@@ -18,16 +24,16 @@ def preprocess(xyz_file):
     feature = []
     target = []
 
-    with open(xyz_file.name, "r") as f:
+    with open(xyz_file.name, "r") as _f:
         is_another_frame = False
         frame_feature = []
         while True:
             if is_another_frame:
-                if len(frame_feature) != 0:
+                if not frame_feature:
                     feature.append(frame_feature)
                 frame_feature = []
                 is_another_frame = False
-            line = f.readline()
+            line = _f.readline()
             if line == '':
                 break
             line = line.rstrip("\n").strip(" ")
@@ -40,10 +46,10 @@ def preprocess(xyz_file):
             elif len(info) < 4:
                 continue
             atom_w = p_table[info[0]][1]
-            x = float(info[1])
-            y = float(info[2])
-            z = float(info[3])
-            coordinate = np.mean([x, y, z])
+            _x = float(info[1])
+            _y = float(info[2])
+            _z = float(info[3])
+            coordinate = np.mean([_x, _y, _z])
             frame_feature.append(coordinate * atom_w)
         feature.append(frame_feature)
 

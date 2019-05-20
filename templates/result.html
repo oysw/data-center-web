@@ -92,6 +92,7 @@
                         </div>
                     </form>
                     <img id="fitImage" onclick="saveFig(this)">
+                    <a id="downloadPredict" class="btn btn-success" href="#">Download predict file</a>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -127,7 +128,7 @@
     <script src="{% static 'web/js/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'web/js/html2canvas.min.js' %}"></script>
     <script>
-    {#clean the page before create graph#}
+    // clean the page before create graph
     function prePlot(ele) {
         $('#fitImage').attr('src', '');
         let eleModelId = $('#modelId');
@@ -137,7 +138,7 @@
         eleModelId.val(modelId)
     }
 
-    {#Choose the data to create graph#}
+    // Choose the data to create graph
     function choose() {
         let data = $("#chooseData").val();
         let featureNum = $("#featureNum");
@@ -188,7 +189,7 @@
         }
     }
 
-    {#Get the shape of upload file#}
+    // Get the shape of upload file
     function uploadFeature(ele){
         let file = ele.files[0];
         let formData = new FormData();
@@ -207,7 +208,7 @@
         })
     }
 
-    {#Create features list according to the shape of test set#}
+    // Create features list according to the shape of test set
     function createFeatureList(num) {
         let html_str = "";
         for (let i = 1; i <= num; i++){
@@ -218,7 +219,7 @@
         $("#feature_2").children("select").html(html_str);
     }
 
-    {#Show the options based on feature number#}
+    // Show the options based on feature number
     function showFeature(ele) {
         let num = $(ele).val();
         if (num == "1"){
@@ -235,7 +236,7 @@
         }
     }
 
-    {#Draw the graph#}
+    // Draw the graph
     function showImage() {
         let obj = $("#plotOptions").serializeArray();
         let formData = new FormData();
@@ -259,6 +260,9 @@
                 }
                 else {
                     $("#fitImage").attr('src', retVal["image"]);
+                    let fileName = retVal["file"].split(".")[0]
+                    let href = "/download?file=" + fileName
+                    $("#downloadPredict").attr("href", href)
                 }
             },
             error: function (XMLHttpRequest, textStatus, msg) {
@@ -267,7 +271,7 @@
         })
     }
 
-    {#Save the graph#}
+    // Save the graph
     function saveFig(ele) {
         let image = $(ele).get(0);
         html2canvas(image).then(function (canvas) {

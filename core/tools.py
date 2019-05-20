@@ -1,18 +1,26 @@
+'''
+Tool used to maintain the program.
+'''
 import re
 import os
-import paramiko
 import base64
+from io import BytesIO
+import paramiko
 import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from io import BytesIO
 from dsweb.settings import DATA_CENTER
 from dsweb.settings import MEDIA_ROOT
 from core.models import Job
 
+from . import post_process
+
 
 def upload_to_center():
+    '''
+    upload files to dslocal everytime new job submit.
+    '''
     local_file = MEDIA_ROOT + "raw/"
     remote_file = MEDIA_ROOT + "raw/"
     ssh = paramiko.SSHClient()
@@ -36,6 +44,9 @@ def upload_to_center():
 
 
 def download_to_web():
+    '''
+    download model when browsing result page.
+    '''
     local_file = MEDIA_ROOT + "result/"
     remote_file = MEDIA_ROOT + "result/"
     ssh = paramiko.SSHClient()
@@ -59,6 +70,9 @@ def download_to_web():
 
 
 def del_file(path):
+    '''
+    delete dir
+    '''
     local_file_list = os.listdir(path)
     for f in local_file_list:
         f_path = os.path.join(path, f)
@@ -70,6 +84,9 @@ def del_file(path):
 
 
 def draw_pic(request):
+    '''
+    load data and assign plotting task
+    '''
     option = request.POST
     print(option)
     model_id = option["id"]
@@ -87,24 +104,29 @@ def draw_pic(request):
         try:
             x_test = np.load(file)
         except TypeError:
-            return "", "Please upload a file"
+            return "", "Please upload a file", ""
         try:
             y_pred = mod.predict(x_test)
-        except ValueError as e:
-            return "", e.args[0]
+        except ValueError as _e:
+            return "", _e.args[0], ""
     else:
         x_test = x
         y_pred = y
 
+    file_name = post_process.predict_file_create(y_pred)
+
     if option["featureNum"] == '1':
-        return draw_pic_2d(option, x, y, x_test, y_pred)
+        return draw_pic_2d(option, x, y, x_test, y_pred), "", file_name
     elif option["featureNum"] == '2':
-        return draw_pic_3d(option, x, y, x_test, y_pred)
+        return draw_pic_3d(option, x, y, x_test, y_pred), "", file_name
     else:
-        return ""
+        return "", "Please choose featureNum!", ""
 
 
 def draw_pic_2d(option, x, y, x_test, y_pred):
+    '''
+    plot 2d graph
+    '''
     x_test = x_test[:, int(option["feature_1"]) - 1].reshape(-1, 1)
     x = x[:, int(option["feature_1"]) - 1].reshape(-1, 1)
 
@@ -128,6 +150,9 @@ def draw_pic_2d(option, x, y, x_test, y_pred):
 
 
 def draw_pic_3d(option, x, y, x_test, y_pred):
+    '''
+    plot 3d graph
+    '''
     x_test_1 = x_test[:, int(option["feature_1"]) - 1].reshape(-1, 1)
     x_test_2 = x_test[:, int(option["feature_2"]) - 1].reshape(-1, 1)
     x_1 = x[:, int(option["feature_1"]) - 1].reshape(-1, 1)

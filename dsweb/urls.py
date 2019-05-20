@@ -27,5 +27,6 @@ urlpatterns = [
     path('result/', views.result),
     path('draw/', views.draw),
     path('detail/', views.data_detail),
+    path('download/', views.download_predict),
     path('admin/', admin.site.urls),
 ]
