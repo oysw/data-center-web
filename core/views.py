@@ -37,7 +37,7 @@ def login(request):
         password = request.POST['password']
         try:
             User.objects.get(username=username)
-        except Job.DoesNotExist:
+        except User.DoesNotExist:
             return render(request, 'login.html', {'error': 'No such user!'})
         user = authenticate(username=username, password=password)
         if user:
@@ -63,7 +63,7 @@ def register(request):
             return render(request, 'register.html', {'pass_error': 'please enter password!', 'username': username})
         try:
             User.objects.get(username=username)
-        except Job.DoesNotExist:
+        except User.DoesNotExist:
             User.objects.create_user(username=username, password=password)
             try:
                 del request.session['username']

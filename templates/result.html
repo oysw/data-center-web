@@ -92,7 +92,7 @@
                         </div>
                     </form>
                     <img id="fitImage" onclick="saveFig(this)">
-                    <a id="downloadPredict" class="btn btn-success" href="#">Download predict file</a>
+                    <a id="downloadPredict" class="btn btn-success" style="display: none" href="#">Download predict file</a>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -260,9 +260,11 @@
                 }
                 else {
                     $("#fitImage").attr('src', retVal["image"]);
-                    let fileName = retVal["file"].split(".")[0]
-                    let href = "/download?file=" + fileName
-                    $("#downloadPredict").attr("href", href)
+                    let fileName = retVal["file"].split(".")[0];
+                    let href = "/download?file=" + fileName;
+                    let downloadBtn = $("#downloadPredict");
+                    downloadBtn.attr("href", href);
+                    downloadBtn.removeAttr("style");
                 }
             },
             error: function (XMLHttpRequest, textStatus, msg) {
@@ -284,6 +286,8 @@
     }
 
     function clean() {
+        $("#downloadPredict").attr("style", "display:none");
+        $("#fitImage").attr("src", "");
         $("#featureNum").attr("style", "display:none");
         $("#featureSelect").val("0");
         $("#uploadData").attr("style", "display:none");
