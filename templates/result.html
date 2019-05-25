@@ -23,14 +23,6 @@
                                 <input class="form-control" name="title">
                             </div>
                             <div class="col-lg-2">
-                                <label>x_label</label>
-                                <input class="form-control" name="x_label">
-                            </div>
-                            <div class="col-lg-2">
-                                <label>y_label</label>
-                                <input class="form-control" name="y_label">
-                            </div>
-                            <div class="col-lg-1">
                                 <label>Raw_color</label>
                                 <select class="form-control" name="raw_color">
                                     <option value="none">None</option>
@@ -40,7 +32,7 @@
                                     <option value="green">Green</option>
                                 </select>
                             </div>
-                            <div class="col-lg-1">
+                            <div class="col-lg-2">
                                 <label>Predict_color</label>
                                 <select class="form-control" name="predict_color">
                                     <option value="none">None</option>
@@ -61,22 +53,14 @@
                                 </select>
                             </div>
                             <div id="uploadData" class="col-lg-3" style="display: none">
-                                <label>x_test</label>
-                                <input class="form-control" name="x_test" type="file" onchange="uploadFeature(this)">
+                                <label>test</label>
+                                <input class="form-control" name="test" type="file" onchange="uploadFeature(this)">
                             </div>
-                            <div id="featureNum" class="col-lg-1" style="display: none">
-                                <label>Feature_N</label>
-                                <select id="featureSelect" name="featureNum" class="form-control" onchange="showFeature(this)">
-                                    <option value="0">0</option>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                </select>
-                            </div>
-                            <div id="feature_1" class="col-lg-2" style="display: none">
+                            <div id="feature_1" class="col-lg-2">
                                 <label>Features_1</label>
                                 <select name="feature_1" class="form-control"></select>
                             </div>
-                            <div id="feature_2" class="col-lg-2" style="display: none">
+                            <div id="feature_2" class="col-lg-2">
                                 <label>Features_2</label>
                                 <select name="feature_2" class="form-control"></select>
                             </div>
@@ -141,51 +125,24 @@
     // Choose the data to create graph
     function choose() {
         let data = $("#chooseData").val();
-        let featureNum = $("#featureNum");
-        let featureSelect = $("#featureSelect");
-        let feature_1 = $("#feature_1");
-        let feature_2 = $("#feature_2");
         if (data == "1") {
-            featureNum.removeAttr("style");
-            featureSelect.val("0");
-            $("#uploadData").attr("style", "display:none");
-
-            feature_1.attr("style", "display:none");
-            feature_1.children("select").html("");
-            feature_2.attr("style", "display:none");
-            feature_2.children("select").html("");
-
             $.ajax({
                 url: "/detail?model_id=" + $("#modelId").val(),
                 type: "GET",
                 success: function (retVal) {
-                    let num = Number(retVal["num"]);
-                    if (num == -1) {
-
+                    let label = retVal["label"];
+                    if (label == "") {
+                        alert("You job is currently not available.")
                     }
                     else {
-                        createFeatureList(num)
+                        label.splice(label.length - 1);
+                        createFeatureList(label)
                     }
                 }
             })
         }
         else if (data == "2"){
-            featureNum.removeAttr("style");
-            featureSelect.val("0");
-            $("#uploadData").removeAttr("style");
-            feature_1.attr("style", "display:none");
-            feature_1.children("select").html("");
-            feature_2.attr("style", "display:none");
-            feature_2.children("select").html("");
-        }
-        else {
-            featureNum.attr("style", "display:none");
-            featureSelect.val("0");
-            $("#uploadData").attr("style", "display:none");
-            feature_1.attr("style", "display:none");
-            feature_1.children("select").html("");
-            feature_2.attr("style", "display:none");
-            feature_2.children("select").html("");
+            $("#uploadData").removeAttr("style")
         }
     }
 
@@ -194,7 +151,7 @@
         let file = ele.files[0];
         let formData = new FormData();
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        formData.append('x_test', file);
+        formData.append('test', file);
         $.ajax({
             url: "/detail/",
             type: "POST",
@@ -202,17 +159,17 @@
             contentType: false,
             processData: false,
             success: function (retVal) {
-                let num = Number(retVal["num"]);
-                createFeatureList(num)
+                let label = retVal["label"];
+                createFeatureList(label)
             }
         })
     }
 
     // Create features list according to the shape of test set
-    function createFeatureList(num) {
-        let html_str = "";
-        for (let i = 1; i <= num; i++){
-            let str = '<option value=' + i + '>feature ' + i + '</option>';
+    function createFeatureList(label) {
+        let html_str = "<option value='0'>None</option>";
+        for (let i = 1; i <= label.length; i++){
+            let str = '<option value=' + i + '>' + label[i - 1] + '</option>';
             html_str += str
         }
         $("#feature_1").children("select").html(html_str);
@@ -245,7 +202,7 @@
         });
         let file = $("#uploadData").children("input")[0].files[0];
         if (typeof(file) != "undefined"){
-            formData.append("x_test", file)
+            formData.append("test", file)
         }
         $.ajax({
             url: "/draw/",

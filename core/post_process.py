@@ -1,6 +1,6 @@
-'''
+"""
 This file is used to process the data after training.
-'''
+"""
 import os
 import numpy as np
 from django.utils.crypto import get_random_string
@@ -8,9 +8,11 @@ from dsweb.settings import MEDIA_ROOT
 
 
 def predict_file_create(y_predict):
-    '''
+    """
     Generate csv file containing predict data.
-    '''
+    :param y_predict:
+    :return: The name of predicted values' file
+    """
     predict_dir = MEDIA_ROOT + 'predict'
     try:
         os.makedirs(predict_dir)

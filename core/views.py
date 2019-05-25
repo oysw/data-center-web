@@ -1,7 +1,7 @@
-'''
+"""
 Request handler.
-'''
-import numpy as np
+"""
+import pandas as pd
 import joblib
 from django.shortcuts import render
 from django.contrib import auth
@@ -13,6 +13,7 @@ from django.http import StreamingHttpResponse
 from django.utils.crypto import get_random_string
 from core.models import Job
 from core.tools import draw_pic
+from core.tools import csv_check
 from core.tools import upload_to_center
 from core.tools import download_to_web
 from dsweb.settings import MEDIA_ROOT
@@ -20,16 +21,20 @@ from dsweb.settings import MEDIA_ROOT
 
 
 def index(request):
-    '''
+    """
     Return the home page when the first visit.
-    '''
+    :param request:
+    :return:
+    """
     return render(request, 'index.html')
 
 
 def login(request):
-    '''
+    """
     Handle login request.
-    '''
+    :param request:
+    :return:
+    """
     if 'username' in request.session.keys():
         return render(request, 'upload.html')
     if request.method == 'POST':
@@ -51,9 +56,11 @@ def login(request):
 
 
 def register(request):
-    '''
+    """
     Handle register request.
-    '''
+    :param request:
+    :return:
+    """
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -76,32 +83,33 @@ def register(request):
 
 
 def upload(request):
-    '''
+    """
     Get the uploaded file and save them to the database.
     Because this program is designed as Web-compute mode, at the end of this function, there /
     will be a transportation action.
-    '''
-    x_file = request.FILES.get('x_file')
-    y_file = request.FILES.get('y_file')
-    if x_file is None:
-        return render(request, 'upload.html', {'x_error': 'Please choose a file!'})
-    if y_file is None:
-        return render(request, 'upload.html', {'y_error': 'Please choose a file!'})
-    x_file.name = 'x_' + get_random_string(7) + '.npy'
-    y_file.name = 'y_' + get_random_string(7) + '.npy'
+    :param request:
+    :return:
+    """
+    csv_file = request.FILES.get('file')
+    if csv_file is None:
+        return render(request, 'upload.html', {'error': 'Please choose a file!'})
+    if not csv_check(csv_file):
+        return render(request, 'upload.html', {'error': 'File is not csv format!'})
+    csv_file.name = 'csv_' + get_random_string(7) + '.csv'
     Job.objects.create(
         owner=request.session['username'],
-        x_file=x_file,
-        y_file=y_file,
+        csv_data=csv_file
     )
     upload_to_center()
     return render(request, 'upload.html', {'success': 'Job submits successfully!'})
 
 
 def logout(request):
-    '''
+    """
     Delete the username in the session.
-    '''
+    :param request:
+    :return:
+    """
     try:
         del request.session['username']
     except KeyError:
@@ -110,9 +118,11 @@ def logout(request):
 
 
 def result(request):
-    '''
+    """
     Switch to result page.
-    '''
+    :param request:
+    :return:
+    """
     if 'username' in request.session.keys():
         return render(request, 'result.html', {'result': get_result(request.session['username'])})
     else:
@@ -120,9 +130,11 @@ def result(request):
 
 
 def draw(request):
-    '''
+    """
     Graph making entrance point.
-    '''
+    :param request:
+    :return:
+    """
     if request.is_ajax():
         if request.method == "POST":
             pic, err, file = draw_pic(request)
@@ -130,29 +142,35 @@ def draw(request):
 
 
 def data_detail(request):
-    '''
+    """
     Analyze uploaded new dataset and return the shape of new dataset.
-    '''
+    :param request:
+    :return:
+    """
     if request.method == "GET":
         data = request.GET
         model_id = int(data["model_id"])
         try:
             job = Job.objects.get(id=model_id)
         except Job.DoesNotExist:
-            return JsonResponse({"num": 0})
-        _x = np.load(job.x_file.file)
-        return JsonResponse({"num": _x.shape[1]})
+            return JsonResponse({"label": ""})
+        data = pd.read_csv(job.csv_data)
+        return JsonResponse({"label": list(data.columns)})
 
     if request.method == "POST":
-        file = request.FILES.get("x_test")
-        num = np.load(file).shape[1]
-        return JsonResponse({"num": num})
+        file = request.FILES.get("test")
+        if not csv_check(file):
+            JsonResponse({"label": ""})
+        data = pd.read_csv(file)
+        return JsonResponse({"label": list(data.columns)})
 
 
 def get_result(username):
-    '''
+    """
     Create the result list on the result page.
-    '''
+    :param username:
+    :return:
+    """
     download_to_web()
     jobs = Job.objects.filter(owner=username, status='F')
     for job in jobs:
@@ -167,12 +185,21 @@ def get_result(username):
 
 
 def download_predict(request):
-    '''
+    """
     Provide predict file.
-    '''
+    :param request:
+    :return:
+    """
     file_name = request.GET["file"] + ".txt"
+
     file_path = MEDIA_ROOT + 'predict/' + file_name
+
     def yield_file(file_n):
+        """
+        Create the content of the file.
+        :param file_n:
+        :return:
+        """
         chunk_size = 512
         with open(file_n, 'r') as _f:
             while True:

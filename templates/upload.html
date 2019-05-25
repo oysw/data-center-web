@@ -14,17 +14,11 @@
                 {% csrf_token %}
                 <h2 class="text-center">Please Upload the file</h2>
                 <div style="height: 30px"></div>
-                <div id="x_file" class="form-group">
-                    <label>X_axis file：</label>
-                    <input type="file" name='x_file'>
-                    <span style="color: red">{{ x_error }}</span>
+                <div id="file" class="form-group">
+                    <label>file：</label>
+                    <input type="file" name='file'>
+                    <span style="color: red">{{ error }}</span>
                 </div>
-                <div id="y_file" class="form-group">
-                    <label>Y_axis file：</label>
-                    <input type="file" name='y_file'>
-                    <span style="color: red">{{ y_error }}</span>
-                </div>
-
                 <button type="reset" style="margin: 0 5px 0 5px" class="btn btn-default pull-right">reset</button>
                 <button type="submit" class="btn btn-primary pull-right">calculate</button>
             </form>

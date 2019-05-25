@@ -1,6 +1,6 @@
-'''
+"""
 Tool used to maintain the program.
-'''
+"""
 import re
 import os
 import base64
@@ -8,6 +8,7 @@ from io import BytesIO
 import paramiko
 import joblib
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from dsweb.settings import DATA_CENTER
@@ -18,9 +19,10 @@ from . import post_process
 
 
 def upload_to_center():
-    '''
+    """
     upload files to dslocal everytime new job submit.
-    '''
+    :return: No return value
+    """
     local_file = MEDIA_ROOT + "raw/"
     remote_file = MEDIA_ROOT + "raw/"
     ssh = paramiko.SSHClient()
@@ -43,10 +45,28 @@ def upload_to_center():
     return
 
 
+def csv_check(file):
+    """
+    check if a file is csv, but maybe xyz file will pass
+    :param file:
+    :return:
+    """
+    suffix = file.name.split(".")[-1]
+    if suffix != "csv":
+        return False
+    try:
+        pd.read_csv(file)
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+
 def download_to_web():
-    '''
+    """
     download model when browsing result page.
-    '''
+    :return:
+    """
     local_file = MEDIA_ROOT + "result/"
     remote_file = MEDIA_ROOT + "result/"
     ssh = paramiko.SSHClient()
@@ -70,9 +90,11 @@ def download_to_web():
 
 
 def del_file(path):
-    '''
+    """
     delete dir
-    '''
+    :param path:
+    :return:
+    """
     local_file_list = os.listdir(path)
     for f in local_file_list:
         f_path = os.path.join(path, f)
@@ -84,15 +106,17 @@ def del_file(path):
 
 
 def draw_pic(request):
-    '''
+    """
     load data and assign plotting task
-    '''
+    :param request:
+    :return:
+    """
     option = request.POST
-    print(option)
     model_id = option["id"]
     job = Job.objects.get(id=model_id)
-    x = np.load(job.x_file.file)
-    y = np.load(job.y_file.file)
+    data = pd.read_csv(job.csv_data)
+    x = data[data.columns[0: -1]]
+    y = data[data.columns[-1]]
     mod = joblib.load(job.mod.file)
 
     if option["chooseData"] == '1':
@@ -100,41 +124,52 @@ def draw_pic(request):
         y_pred = mod.predict(x_test)
 
     elif option["chooseData"] == '2':
-        file = request.FILES.get("x_test")
+        file = request.FILES.get("test")
         try:
-            x_test = np.load(file)
-        except TypeError:
-            return "", "Please upload a file", ""
+            x_test = pd.read_csv(file)
+        except Exception as _e:
+            return "", _e.args[0], ""
         try:
             y_pred = mod.predict(x_test)
         except ValueError as _e:
             return "", _e.args[0], ""
     else:
-        x_test = x
-        y_pred = y
+        return "", "Please choose a data type", ""
 
     file_name = post_process.predict_file_create(y_pred)
 
-    if option["featureNum"] == '1':
-        return draw_pic_2d(option, x, y, x_test, y_pred), "", file_name
-    elif option["featureNum"] == '2':
+    f1 = option["feature_1"]
+    f2 = option["feature_2"]
+    if f1 != '0' and f2 != '0':
         return draw_pic_3d(option, x, y, x_test, y_pred), "", file_name
+    elif f1 != '0' or f2 != '0':
+        return draw_pic_2d(option, x, y, x_test, y_pred), "", file_name
     else:
-        return "", "Please choose featureNum!", ""
+        return "", "Please choose feature!", ""
 
 
 def draw_pic_2d(option, x, y, x_test, y_pred):
-    '''
+    """
     plot 2d graph
-    '''
-    x_test = x_test[:, int(option["feature_1"]) - 1].reshape(-1, 1)
-    x = x[:, int(option["feature_1"]) - 1].reshape(-1, 1)
+    :param option: graph option
+    :param x: x_axis value(raw)
+    :param y: y_axis value(raw)
+    :param x_test: x_axis value(provided or raw)
+    :param y_pred: y_axis value(calculated)
+    :return:
+    """
+    if option["feature_1"] != '0':
+        plot_feature = int(option["feature_1"]) - 1
+    else:
+        plot_feature = int(option["feature_2"]) - 1
+    x_test = x_test[x_test.columns[plot_feature]]
+    x = x[x.columns[plot_feature]]
 
     plt.figure()
     plt.grid(True)
     plt.title(option["title"])
-    plt.xlabel(option["x_label"])
-    plt.ylabel(option["y_label"])
+    plt.xlabel(x_test.name)
+    plt.ylabel(y.name)
     if option['raw_color'] != 'none':
         plt.scatter(x, y, c=option["raw_color"], s=40, marker="^")
     if option['predict_color'] != 'none':
@@ -150,17 +185,28 @@ def draw_pic_2d(option, x, y, x_test, y_pred):
 
 
 def draw_pic_3d(option, x, y, x_test, y_pred):
-    '''
+    """
     plot 3d graph
-    '''
-    x_test_1 = x_test[:, int(option["feature_1"]) - 1].reshape(-1, 1)
-    x_test_2 = x_test[:, int(option["feature_2"]) - 1].reshape(-1, 1)
-    x_1 = x[:, int(option["feature_1"]) - 1].reshape(-1, 1)
-    x_2 = x[:, int(option["feature_2"]) - 1].reshape(-1, 1)
+    :param option:
+    :param x:
+    :param y:
+    :param x_test:
+    :param y_pred:
+    :return:
+    """
+    plot_feature_1 = int(option["feature_1"]) - 1
+    plot_feature_2 = int(option["feature_2"]) - 1
+    x_test_1 = x_test[x_test.columns[plot_feature_1]]
+    x_test_2 = x_test[x_test.columns[plot_feature_2]]
+    x_1 = x[x.columns[plot_feature_1]]
+    x_2 = x[x.columns[plot_feature_2]]
 
     fig = plt.figure()
     ax = Axes3D(fig)
     ax.set_title(option["title"])
+    ax.set_xlabel(x_test_1.name)
+    ax.set_ylabel(x_test_2.name)
+    ax.set_zlabel(y.name)
     if option['raw_color'] != 'none':
         ax.scatter(x_1, x_2, y, c=option["raw_color"], s=40)
     if option['predict_color'] != 'none':
