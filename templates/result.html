@@ -11,7 +11,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="closeWindow()">&times;</button>
-                    <h4 class="modal-title" id="myModalLabel"></h4>
+                    <h4 class="modal-title" id="myModalLabel">Plot</h4>
                 </div>
                 <div class="modal-body">
                     <form id="plotOptions" enctype="multipart/form-data" class="col-lg-offset-1">
@@ -117,7 +117,6 @@
         $('#fitImage').attr('src', '');
         let eleModelId = $('#modelId');
         eleModelId.val('');
-        $('#myModalLabel').html('Image');
         let modelId = $(ele).children('input').val();
         eleModelId.val(modelId)
     }
@@ -126,6 +125,7 @@
     function choose() {
         let data = $("#chooseData").val();
         if (data == "1") {
+            $("#uploadData").attr("style", "display:none");
             $.ajax({
                 url: "/detail?model_id=" + $("#modelId").val(),
                 type: "GET",
@@ -142,7 +142,12 @@
             })
         }
         else if (data == "2"){
+            $("#feature_1").children("select").html("");
+            $("#feature_2").children("select").html("");
             $("#uploadData").removeAttr("style")
+        }
+        else {
+            $("#uploadData").attr("style", "display:none");
         }
     }
 
@@ -174,23 +179,6 @@
         }
         $("#feature_1").children("select").html(html_str);
         $("#feature_2").children("select").html(html_str);
-    }
-
-    // Show the options based on feature number
-    function showFeature(ele) {
-        let num = $(ele).val();
-        if (num == "1"){
-            $("#feature_2").attr("style", "display:none");
-            $("#feature_1").removeAttr("style")
-        }
-        else if (num == "2"){
-            $("#feature_1").removeAttr("style");
-            $("#feature_2").removeAttr("style")
-        }
-        else {
-            $("#feature_1").attr("style", "display:none");
-            $("#feature_2").attr("style", "display:none")
-        }
     }
 
     // Draw the graph
@@ -245,15 +233,7 @@
     function clean() {
         $("#downloadPredict").attr("style", "display:none");
         $("#fitImage").attr("src", "");
-        $("#featureNum").attr("style", "display:none");
-        $("#featureSelect").val("0");
         $("#uploadData").attr("style", "display:none");
-        let feature_1 = $("#feature_1");
-        let feature_2 = $("#feature_2");
-        feature_1.attr("style", "display:none");
-        feature_1.children("select").html("");
-        feature_2.attr("style", "display:none");
-        feature_2.children("select").html("");
     }
 
     function closeWindow() {

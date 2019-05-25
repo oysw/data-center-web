@@ -7,7 +7,6 @@ import base64
 from io import BytesIO
 import paramiko
 import joblib
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -56,6 +55,7 @@ def csv_check(file):
         return False
     try:
         pd.read_csv(file)
+        file.seek(0)
         return True
     except Exception as e:
         print(e)
@@ -128,11 +128,12 @@ def draw_pic(request):
         try:
             x_test = pd.read_csv(file)
         except Exception as _e:
-            return "", _e.args[0], ""
+            print(_e)
+            return "", "Uploaded file is invalid.", ""
         try:
             y_pred = mod.predict(x_test)
         except ValueError as _e:
-            return "", _e.args[0], ""
+            return "", "Uploaded file is unacceptable.", ""
     else:
         return "", "Please choose a data type", ""
 
