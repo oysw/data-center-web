@@ -100,7 +100,7 @@ def upload(request):
         owner=request.session['username'],
         csv_data=csv_file
     )
-    # upload_to_center()
+    upload_to_center()
     return render(request, 'upload.html', {'success': 'Job submits successfully!'})
 
 
@@ -171,7 +171,7 @@ def get_result(username):
     :param username:
     :return:
     """
-    # download_to_web()
+    download_to_web()
     jobs = Job.objects.filter(owner=username, status='F')
     for job in jobs:
         # Model
