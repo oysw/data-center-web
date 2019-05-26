@@ -3,16 +3,14 @@ Tool used to maintain the program.
 """
 import re
 import os
-import base64
-from io import BytesIO
 import paramiko
 import joblib
 import pandas as pd
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from dsweb.settings import DATA_CENTER
 from dsweb.settings import MEDIA_ROOT
 from core.models import Job
+import plotly.offline as of
+import plotly.graph_objs as go
 
 from . import post_process
 
@@ -166,23 +164,36 @@ def draw_pic_2d(option, x, y, x_test, y_pred):
     x_test = x_test[x_test.columns[plot_feature]]
     x = x[x.columns[plot_feature]]
 
-    plt.figure()
-    plt.grid(True)
-    plt.title(option["title"])
-    plt.xlabel(x_test.name)
-    plt.ylabel(y.name)
-    if option['raw_color'] != 'none':
-        plt.scatter(x, y, c=option["raw_color"], s=40, marker="^")
-    if option['predict_color'] != 'none':
-        plt.scatter(x_test, y_pred, c=option["predict_color"], s=10, marker="*")
+    trace_raw = go.Scatter(
+        x=x,
+        y=y,
+        name='raw',
+        mode='markers',
+        marker=dict(
+            size=10,
+            color=option["raw_color"]
+        )
+    )
+    trace_pred = go.Scatter(
+        x=x_test,
+        y=y_pred,
+        name='predict',
+        mode='markers',
+        marker=dict(
+            size=5,
+            color=option["predict_color"]
+        )
+    )
 
-    buffer = BytesIO()
-    plt.savefig(buffer)
-    img = buffer.getvalue()
-    imb = base64.b64encode(img)
-    ims = imb.decode()
-    imd = "data:image/png;base64," + ims
-    return imd
+    layout = go.Layout(
+        title=option["title"],
+        xaxis=dict(title=x_test.name),
+        yaxis=dict(title=y.name)
+    )
+    data = [trace_raw, trace_pred]
+    fig = dict(data=data, layout=layout)
+    html = of.plot(fig, output_type="div")
+    return html
 
 
 def draw_pic_3d(option, x, y, x_test, y_pred):
@@ -202,21 +213,51 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
     x_1 = x[x.columns[plot_feature_1]]
     x_2 = x[x.columns[plot_feature_2]]
 
-    fig = plt.figure()
-    ax = Axes3D(fig)
-    ax.set_title(option["title"])
-    ax.set_xlabel(x_test_1.name)
-    ax.set_ylabel(x_test_2.name)
-    ax.set_zlabel(y.name)
-    if option['raw_color'] != 'none':
-        ax.scatter(x_1, x_2, y, c=option["raw_color"], s=40)
-    if option['predict_color'] != 'none':
-        ax.scatter(x_test_1, x_test_2, y_pred, c=option["predict_color"], s=10)
+    trace_raw = go.Scatter3d(
+        x=x_1,
+        y=x_2,
+        z=y,
+        name='raw',
+        mode='markers',
+        marker=dict(
+            size=5,
+            color=option["raw_color"]
+        )
+    )
+    trace_pred = go.Scatter3d(
+        x=x_test_1,
+        y=x_test_2,
+        z=y_pred,
+        name='predict',
+        mode='markers',
+        marker=dict(
+            size=5,
+            color=option["predict_color"]
+        )
+    )
 
-    buffer = BytesIO()
-    plt.savefig(buffer)
-    img = buffer.getvalue()
-    imb = base64.b64encode(img)
-    ims = imb.decode()
-    imd = "data:image/png;base64," + ims
-    return imd
+    layout = go.Layout(
+        title=option["title"],
+        scene=go.Scene(
+            xaxis=go.layout.scene.XAxis(
+                title=x_test_1.name,
+                showbackground=True,
+                backgroundcolor='rgb(230, 230, 230)'
+            ),
+            yaxis=go.layout.scene.YAxis(
+                title=x_test_2.name,
+                showbackground=True,
+                backgroundcolor='rgb(230, 230, 230)'
+            ),
+            zaxis=go.layout.scene.ZAxis(
+                title=y.name,
+                showbackground=True,
+                backgroundcolor='rgb(230, 230, 230)'
+            )
+        )
+    )
+
+    data = [trace_raw, trace_pred]
+    fig = dict(data=data, layout=layout)
+    html = of.plot(fig, output_type="div")
+    return html

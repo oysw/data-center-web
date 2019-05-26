@@ -14,69 +14,65 @@
                     <h4 class="modal-title" id="myModalLabel">Plot</h4>
                 </div>
                 <div class="modal-body">
-                    <form id="plotOptions" enctype="multipart/form-data" class="col-lg-offset-1">
-                        {% csrf_token %}
-                        <input id="modelId" name="id" type="hidden">
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <label>Title</label>
-                                <input class="form-control" name="title">
+                    <div class="row">
+                        <form id="plotOptions" enctype="multipart/form-data" class="col-lg-offset-1">
+                            {% csrf_token %}
+                            <input id="modelId" name="id" type="hidden">
+                            <div class="row">
+                                <div class="col-lg-3">
+                                    <label>Title</label>
+                                    <input class="form-control" name="title">
+                                </div>
+                                <div class="col-lg-2">
+                                    <label>Raw_color</label>
+                                    <input type="color" class="form-control" name="raw_color">
+                                </div>
+                                <div class="col-lg-2">
+                                    <label>Predict_color</label>
+                                    <input type="color" class="form-control" name="predict_color">
+                                </div>
                             </div>
-                            <div class="col-lg-2">
-                                <label>Raw_color</label>
-                                <select class="form-control" name="raw_color">
-                                    <option value="none">None</option>
-                                    <option value="black">Black</option>
-                                    <option value="blue">Blue</option>
-                                    <option value="yellow">Yellow</option>
-                                    <option value="green">Green</option>
-                                </select>
+                            <div class="row">
+                                <div class="col-lg-2">
+                                    <label>Data for graph</label>
+                                    <select id="chooseData" name="chooseData" class="form-control" onchange="choose()">
+                                        <option value="0">Choose data</option>
+                                        <option value="1">Training data</option>
+                                        <option value="2">Upload new data</option>
+                                    </select>
+                                </div>
+                                <div id="uploadData" class="col-lg-3" style="display: none">
+                                    <label>test</label>
+                                    <input class="form-control" name="test" type="file" onchange="uploadFeature(this)">
+                                </div>
+                                <div id="feature_1" class="col-lg-2">
+                                    <label>Features_1</label>
+                                    <select name="feature_1" class="form-control"></select>
+                                </div>
+                                <div id="feature_2" class="col-lg-2">
+                                    <label>Features_2</label>
+                                    <select name="feature_2" class="form-control"></select>
+                                </div>
                             </div>
-                            <div class="col-lg-2">
-                                <label>Predict_color</label>
-                                <select class="form-control" name="predict_color">
-                                    <option value="none">None</option>
-                                    <option value="black">Black</option>
-                                    <option value="blue">Blue</option>
-                                    <option value="yellow">Yellow</option>
-                                    <option value="green">Green</option>
-                                </select>
+                            <br>
+                            <div class="row">
+                                <div class="col-lg-1">
+                                    <input class="btn btn-primary btn-block" type="button" onclick="showImage()" value="plot">
+                                </div>
+                                <div class="col-lg-1">
+                                    <input id="reset" class="btn btn-danger btn-block" type="reset" value="reset" onclick="clean()">
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-2">
-                                <label>Data for graph</label>
-                                <select id="chooseData" name="chooseData" class="form-control" onchange="choose()">
-                                    <option value="0">Choose data</option>
-                                    <option value="1">Training data</option>
-                                    <option value="2">Upload new data</option>
-                                </select>
-                            </div>
-                            <div id="uploadData" class="col-lg-3" style="display: none">
-                                <label>test</label>
-                                <input class="form-control" name="test" type="file" onchange="uploadFeature(this)">
-                            </div>
-                            <div id="feature_1" class="col-lg-2">
-                                <label>Features_1</label>
-                                <select name="feature_1" class="form-control"></select>
-                            </div>
-                            <div id="feature_2" class="col-lg-2">
-                                <label>Features_2</label>
-                                <select name="feature_2" class="form-control"></select>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="row">
-                            <div class="col-lg-1">
-                                <input class="btn btn-primary btn-block" type="button" onclick="showImage()" value="plot">
-                            </div>
-                            <div class="col-lg-1">
-                                <input id="reset" class="btn btn-danger btn-block" type="reset" value="reset" onclick="clean()">
-                            </div>
-                        </div>
-                    </form>
-                    <img id="fitImage" onclick="saveFig(this)">
-                    <a id="downloadPredict" class="btn btn-success" style="display: none" href="#">Download predict file</a>
+                        </form>
+                    </div>
+                    <br>
+                    <div class="container">
+                        <iframe id="fitImage" style="width: 100%; height: 800px"></iframe>
+                    </div>
+                    <br>
+                    <div class="row col-lg-offset-1">
+                        <a id="downloadPredict" class="btn btn-success" style="display: none" href="#">Download predict file</a>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -204,7 +200,10 @@
                     alert(retVal["err"])
                 }
                 else {
-                    $("#fitImage").attr('src', retVal["image"]);
+                    let fig = document.getElementById("fitImage").contentDocument;
+                    fig.open();
+                    fig.write(retVal["image"]);
+                    fig.close();
                     let fileName = retVal["file"].split(".")[0];
                     let href = "/download?file=" + fileName;
                     let downloadBtn = $("#downloadPredict");
@@ -215,18 +214,6 @@
             error: function (XMLHttpRequest, textStatus, msg) {
                 alert(msg)
             }
-        })
-    }
-
-    // Save the graph
-    function saveFig(ele) {
-        let image = $(ele).get(0);
-        html2canvas(image).then(function (canvas) {
-            let imgUrl = canvas.toDataURL("image/png");
-            let link = document.createElement("a");
-            link.download = new Date().getTime().toString() + ".png";
-            link.href = imgUrl;
-            link.click();
         })
     }
 
