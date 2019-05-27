@@ -134,7 +134,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 # Media root
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/tmp/ai4chem/media/'
+MEDIA_ROOT = '/tmp/ai4chem/'
 
 # Center address
 DATA_CENTER = {
