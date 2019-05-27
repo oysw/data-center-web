@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '_igmj9^t78@v^k$#*3!*!=!!ele7r^tlk95-#xbd@lq11r)!3c'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -85,8 +85,7 @@ WSGI_APPLICATION = 'dsweb.wsgi.application'
 DATABASES = {
     'default': {
         "ENGINE": 'django.db.backends.mysql',
-        "HOST": '192.168.1.9',
-        # "HOST": '127.0.0.1',
+        "HOST": '10.24.3.143',
         "PORT": '3306',
         "NAME": 'data_cloud',
         "USER": 'root',
@@ -139,8 +138,8 @@ MEDIA_ROOT = '/tmp/ai4chem/media/'
 
 # Center address
 DATA_CENTER = {
-    'hostname': '192.168.1.9',
-    'username': 'oysw',
+    'hostname': '10.24.3.143',
+    'username': 'chenglab',
     'port': 22,
-    'password': '1996'
+    'password': '447447447'
 }
