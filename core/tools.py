@@ -3,43 +3,18 @@ Tool used to maintain the program.
 """
 import re
 import os
-import paramiko
 import joblib
+import psutil
 import pandas as pd
-from dsweb.settings import DATA_CENTER
-from dsweb.settings import MEDIA_ROOT
 from core.models import Job
 import plotly.offline as of
 import plotly.graph_objs as go
-
+from io import BytesIO
+import joblib
+from core.automl.auto_ml import auto_ml
+from django.core.files import File
+from django.utils.crypto import get_random_string
 from . import post_process
-
-
-def upload_to_center():
-    """
-    upload files to dslocal everytime new job submit.
-    :return: No return value
-    """
-    local_file = MEDIA_ROOT + "raw/"
-    remote_file = MEDIA_ROOT + "raw/"
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(**DATA_CENTER)
-    stdin, stdout, stderr = ssh.exec_command('ls ' + remote_file)
-    # The first-time upload
-    err = stderr.read().decode('utf-8')
-    pattern = re.compile("No such file or directory")
-    if re.search(pattern, err):
-        stdin, stdout, stderr = ssh.exec_command('mkdir -p ' + remote_file)
-        if stderr.read().decode('utf-8') != '':
-            return
-    paramiko.SFTPClient.from_transport(ssh.get_transport())
-    sftp = ssh.open_sftp()
-    for f in os.listdir(local_file):
-        sftp.put(os.path.join(local_file, f), os.path.join(remote_file, f))
-    ssh.close()
-#    del_file(local_file)
-    return
 
 
 def csv_check(file):
@@ -58,49 +33,6 @@ def csv_check(file):
     except Exception as e:
         print(e)
         return False
-
-
-def download_to_web():
-    """
-    download model when browsing result page.
-    :return:
-    """
-    local_file = MEDIA_ROOT + "result/"
-    remote_file = MEDIA_ROOT + "result/"
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(**DATA_CENTER)
-    stdin, stdout, stderr = ssh.exec_command('ls ' + remote_file)
-    file_list = stdout.read().decode('utf-8')
-    if file_list == "":
-        return
-    try:
-        os.makedirs(local_file)
-    except FileExistsError:
-        pass
-    remote_file_list = file_list.rstrip("\n").split("\n")
-    paramiko.SFTPClient.from_transport(ssh.get_transport())
-    sftp = ssh.open_sftp()
-    for f in remote_file_list:
-        sftp.get(os.path.join(remote_file, f), os.path.join(local_file, f))
-    ssh.close()
-    return
-
-
-def del_file(path):
-    """
-    delete dir
-    :param path:
-    :return:
-    """
-    local_file_list = os.listdir(path)
-    for f in local_file_list:
-        f_path = os.path.join(path, f)
-        if os.path.isdir(f_path):
-            del_file(f_path)
-            os.rmdir(f_path)
-        else:
-            os.remove(f_path)
 
 
 def draw_pic(request):
@@ -261,3 +193,65 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
     fig = dict(data=data, layout=layout)
     html = of.plot(fig, output_type="div")
     return html
+
+
+def calculate():
+    if not is_last_job_finished():
+        return
+    save_current_job_id(os.getpid())
+    job_list = Job.objects.filter(status='W').order_by('create_time')
+    if len(job_list) == 0:
+        return
+    job = job_list.first()
+    try:
+        data = pd.read_csv(job.csv_data)
+    except Exception as e:
+        job_error(job, e)
+        return
+    job.status = 'C'
+    job.save()
+    try:
+        x = data[data.columns[0: -1]]
+        y = data[data.columns[-1]]
+        mod = auto_ml(x, y)
+    except Exception as e:
+        job_error(job, e)
+        return
+
+    temp = BytesIO()
+    joblib.dump(mod, temp)
+    model_file = File(temp)
+    model_file.name = 'model_' + get_random_string(7)
+
+    # Save result
+    job.mod = model_file
+    job.status = 'F'
+    job.save()
+    return
+
+
+def is_last_job_finished():
+    if not os.path.exists('/tmp/ai4chem/script/ds_current_job.txt'):
+        return True
+    with open('/tmp/ai4chem/script/ds_current_job.txt', 'r') as f:
+        pid = f.read()
+    if psutil.pid_exists(eval(pid)):
+        return False
+    else:
+        return True
+
+
+def save_current_job_id(pid):
+    if not os.path.exists('/tmp/ai4chem/script/'):
+        os.makedirs('/tmp/ai4chem/script/')
+    with open('/tmp/ai4chem/script/ds_current_job.txt', 'w') as f:
+        f.write(str(pid))
+    return
+
+
+def job_error(job, e):
+    job.status = 'E'
+    print(e)
+    job.save()
+    os.remove('/tmp/ai4chem/script/ds_current_job.txt')
+    return

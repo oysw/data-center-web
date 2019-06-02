@@ -9,13 +9,13 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.http import StreamingHttpResponse
+from django.utils.safestring import mark_safe
 
 from django.utils.crypto import get_random_string
 from core.models import Job
 from core.tools import draw_pic
 from core.tools import csv_check
-from core.tools import upload_to_center
-from core.tools import download_to_web
+from core.pre_process import csv_preprocess
 from dsweb.settings import MEDIA_ROOT
 # Create your views here.
 
@@ -82,11 +82,18 @@ def register(request):
         return render(request, 'register.html')
 
 
+def preprocess(request):
+    """
+    preprocess csv and add some chemical feature
+    :param request:
+    :return:
+    """
+    return 0
+
+
 def upload(request):
     """
-    Get the uploaded file and save them to the database.
-    Because this program is designed as Web-compute mode, at the end of this function, there /
-    will be a transportation action.
+    Get the uploaded file and switch to preprocess page
     :param request:
     :return:
     """
@@ -95,13 +102,27 @@ def upload(request):
         return render(request, 'upload.html', {'error': 'Please choose a file!'})
     if not csv_check(csv_file):
         return render(request, 'upload.html', {'error': 'File is not csv format!'})
-    csv_file.name = 'csv_' + get_random_string(7) + '.csv'
-    Job.objects.create(
-        owner=request.session['username'],
-        csv_data=csv_file
-    )
-    upload_to_center()
-    return render(request, 'upload.html', {'success': 'Job submits successfully!'})
+    status, csv_html = csv_preprocess([], csv_file)
+
+    if status:
+        return render(request, 'preprocess.html', {'html': mark_safe(csv_html)})
+    else:
+        return render(request, 'upload.html', {'error': csv_html})
+
+
+def submit(request):
+    """
+    Upload the file to data center and save them to the database.
+    Because this program is designed as Web-compute mode, at the end of this function, there /
+    will be a transportation action.
+    :return:
+    """
+    # csv_file.name = 'csv_' + get_random_string(7) + '.csv'
+    # Job.objects.create(
+    #     owner=request.session['username'],
+    #     csv_data=csv_file
+    # )
+    return 0
 
 
 def logout(request):
@@ -171,7 +192,6 @@ def get_result(username):
     :param username:
     :return:
     """
-    download_to_web()
     jobs = Job.objects.filter(owner=username, status='F')
     for job in jobs:
         # Model
@@ -191,7 +211,6 @@ def download_predict(request):
     :return:
     """
     file_name = request.GET["file"] + ".txt"
-
     file_path = MEDIA_ROOT + 'predict/' + file_name
 
     def yield_file(file_n):

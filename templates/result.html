@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block title %}数据中心{% endblock %}
 {% block css %}
-    <link rel="stylesheet" href="{% static 'web/css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -105,8 +105,8 @@
             </tr>
         {% endfor %}
     </table>
-    <script src="{% static 'web/js/jquery-3.3.1.min.js' %}"></script>
-    <script src="{% static 'web/js/html2canvas.min.js' %}"></script>
+    <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+    <script src="{% static 'js/html2canvas.min.js' %}"></script>
     <script>
     // clean the page before create graph
     function prePlot(ele) {

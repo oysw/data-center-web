@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '_igmj9^t78@v^k$#*3!*!=!!ele7r^tlk95-#xbd@lq11r)!3c'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_crontab',
     'core',
 ]
 
@@ -75,19 +76,12 @@ WSGI_APPLICATION = 'dsweb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-
 DATABASES = {
     'default': {
         "ENGINE": 'django.db.backends.mysql',
-        "HOST": '10.24.3.143',
+        "HOST": '127.0.0.1',
         "PORT": '3306',
-        "NAME": 'data_cloud',
+        "NAME": 'datacenter',
         "USER": 'root',
         "PASSWORD": 'chem123456',
     }
@@ -136,10 +130,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/tmp/ai4chem/'
 
-# Center address
-DATA_CENTER = {
-    'hostname': '10.24.3.143',
-    'username': 'chenglab',
-    'port': 22,
-    'password': '447447447'
-}
+# cron tasks
+CRONJOBS = [
+    ('* * * * *', 'core.tools.calculate', '>> /tmp/ai4chem/job_download_status.log'),
+]
