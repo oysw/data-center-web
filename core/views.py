@@ -223,7 +223,7 @@ def data_detail(request):
             job = Job.objects.get(id=model_id)
         except Job.DoesNotExist:
             return JsonResponse({"label": ""})
-        data = pd.read_pickle(job.data)
+        data = pd.read_pickle(job.data, compression=None)
         job.data.close()
         return JsonResponse({"label": list(data.columns)})
 

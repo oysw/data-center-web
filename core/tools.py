@@ -24,7 +24,7 @@ def draw_pic(request):
     option = request.POST
     model_id = option["id"]
     job = Job.objects.get(id=model_id)
-    data = pd.read_pickle(job.data)
+    data = pd.read_pickle(job.data, compression=None)
     x = data[data.columns[0: -1]]
     y = data[data.columns[-1]]
     mod = joblib.load(job.mod.file)
@@ -36,7 +36,7 @@ def draw_pic(request):
     elif option["chooseData"] == '2':
         file = request.FILES.get("test")
         try:
-            x_test = pd.read_pickle(file)
+            x_test = pd.read_pickle(file, compression=None)
         except Exception as _e:
             print(_e)
             return "", "Uploaded file is invalid.", ""
@@ -184,7 +184,7 @@ def calculate():
         return
     job = job_list.first()
     try:
-        data = pd.read_pickle(job.data)
+        data = pd.read_pickle(job.data, compression=None)
     except Exception as e:
         job_error(job, e)
         return
