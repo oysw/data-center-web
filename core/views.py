@@ -3,6 +3,8 @@ Request handler.
 """
 import pandas as pd
 import joblib
+import os
+from io import StringIO
 from django.shortcuts import render
 from django.contrib import auth
 from django.contrib.auth import authenticate
@@ -10,6 +12,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.http import StreamingHttpResponse
 from django.utils.safestring import mark_safe
+from django.core.files import File
 
 from django.utils.crypto import get_random_string
 from core.models import Job
@@ -82,47 +85,79 @@ def register(request):
         return render(request, 'register.html')
 
 
-def preprocess(request):
-    """
-    preprocess csv and add some chemical feature
-    :param request:
-    :return:
-    """
-    return 0
-
-
 def upload(request):
     """
     Get the uploaded file and switch to preprocess page
     :param request:
     :return:
     """
-    csv_file = request.FILES.get('file')
-    if csv_file is None:
-        return render(request, 'upload.html', {'error': 'Please choose a file!'})
-    if not csv_check(csv_file):
-        return render(request, 'upload.html', {'error': 'File is not csv format!'})
-    status, csv_html = csv_preprocess([], csv_file)
-
-    if status:
-        return render(request, 'preprocess.html', {'html': mark_safe(csv_html)})
+    if request.method == "POST":
+        csv_file = request.FILES.get('file')
+        if csv_file is None:
+            return render(request, 'upload.html', {'error': 'Please choose a file!'})
+        if not csv_check(csv_file):
+            return render(request, 'upload.html', {'error': 'File is not csv format!'})
+        status, df = csv_preprocess([], csv_file)
     else:
-        return render(request, 'upload.html', {'error': csv_html})
+        option = request.GET
+        option = list(option)
+        job_id = request.session["job_id"]
+        status, df = csv_preprocess(option, Job.objects.get(id=job_id).csv_data)
+    if status:
+        f = File(StringIO())
+        df.to_csv(f, index=None)
+        try:
+            job_id = request.session["job_id"]
+            file_path = request.session["job_file_path"]
+            try:
+                os.remove(MEDIA_ROOT + file_path)
+            except FileNotFoundError:
+                pass
+            job = Job.objects.get(id=job_id)
+            f.name = file_path.split("/")[-1]
+            job.csv_data = f
+            job.save()
+            job.csv_data.close()
+        except KeyError:
+            f.name = 'csv_' + get_random_string(7) + '.csv'
+            job = Job.objects.create(
+                owner=request.session['username'],
+                csv_data=f
+            )
+            job_id = job.id
+            request.session["job_id"] = job_id
+            request.session["job_file_path"] = job.csv_data.name
+            job.csv_data.close()
+        return_dict = {
+            'html': mark_safe(df.to_html()),
+            'job_id': job_id
+        }
+        if request.method == "POST":
+            return render(request, 'upload.html', return_dict)
+        else:
+            return JsonResponse(return_dict)
+    else:
+        if request.method == "POST":
+            return render(request, 'upload.html', {'error': df})
+        else:
+            return JsonResponse({'error': df})
 
 
 def submit(request):
     """
-    Upload the file to data center and save them to the database.
-    Because this program is designed as Web-compute mode, at the end of this function, there /
-    will be a transportation action.
+    Submit the job and begin calculating
+    :param request:
     :return:
     """
-    # csv_file.name = 'csv_' + get_random_string(7) + '.csv'
-    # Job.objects.create(
-    #     owner=request.session['username'],
-    #     csv_data=csv_file
-    # )
-    return 0
+    job_id = request.session["job_id"]
+    job = Job.objects.get(id=job_id)
+    job.status = "W"
+    try:
+        del request.session["job_id"]
+        del request.session["job_file_path"]
+    except KeyError:
+        pass
+    return render(request, "upload.html")
 
 
 def logout(request):
@@ -133,6 +168,8 @@ def logout(request):
     """
     try:
         del request.session['username']
+        del request.session['job_id']
+        del request.session["job_file_path"]
     except KeyError:
         pass
     return render(request, 'index.html')
@@ -176,6 +213,7 @@ def data_detail(request):
         except Job.DoesNotExist:
             return JsonResponse({"label": ""})
         data = pd.read_csv(job.csv_data)
+        job.csv_data.close()
         return JsonResponse({"label": list(data.columns)})
 
     if request.method == "POST":
