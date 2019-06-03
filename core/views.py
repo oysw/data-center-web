@@ -4,7 +4,7 @@ Request handler.
 import pandas as pd
 import joblib
 import os
-from io import StringIO
+from io import BytesIO
 from django.shortcuts import render
 from django.contrib import auth
 from django.contrib.auth import authenticate
@@ -17,8 +17,7 @@ from django.core.files import File
 from django.utils.crypto import get_random_string
 from core.models import Job
 from core.tools import draw_pic
-from core.tools import csv_check
-from core.pre_process import csv_preprocess
+from core.pre_process import preprocess
 from dsweb.settings import MEDIA_ROOT
 # Create your views here.
 
@@ -92,20 +91,18 @@ def upload(request):
     :return:
     """
     if request.method == "POST":
-        csv_file = request.FILES.get('file')
-        if csv_file is None:
+        file = request.FILES.get('file')
+        if file is None:
             return render(request, 'upload.html', {'error': 'Please choose a file!'})
-        if not csv_check(csv_file):
-            return render(request, 'upload.html', {'error': 'File is not csv format!'})
-        status, df = csv_preprocess([], csv_file)
+        status, df = preprocess([], file)
     else:
         option = request.GET
         option = list(option)
         job_id = request.session["job_id"]
-        status, df = csv_preprocess(option, Job.objects.get(id=job_id).csv_data)
+        status, df = preprocess(option, Job.objects.get(id=job_id).data)
     if status:
-        f = File(StringIO())
-        df.to_csv(f, index=None)
+        f = File(BytesIO())
+        df.to_pickle(f, compression=None)
         try:
             job_id = request.session["job_id"]
             file_path = request.session["job_file_path"]
@@ -115,19 +112,19 @@ def upload(request):
                 pass
             job = Job.objects.get(id=job_id)
             f.name = file_path.split("/")[-1]
-            job.csv_data = f
+            job.data = f
             job.save()
-            job.csv_data.close()
+            job.data.close()
         except KeyError:
-            f.name = 'csv_' + get_random_string(7) + '.csv'
+            f.name = get_random_string(7) + '.pkl'
             job = Job.objects.create(
                 owner=request.session['username'],
-                csv_data=f
+                data=f
             )
             job_id = job.id
             request.session["job_id"] = job_id
-            request.session["job_file_path"] = job.csv_data.name
-            job.csv_data.close()
+            request.session["job_file_path"] = job.data.name
+            job.data.close()
         return_dict = {
             'html': mark_safe(df.to_html()),
             'job_id': job_id
@@ -152,6 +149,7 @@ def submit(request):
     job_id = request.session["job_id"]
     job = Job.objects.get(id=job_id)
     job.status = "W"
+    job.save()
     try:
         del request.session["job_id"]
         del request.session["job_file_path"]
@@ -212,15 +210,17 @@ def data_detail(request):
             job = Job.objects.get(id=model_id)
         except Job.DoesNotExist:
             return JsonResponse({"label": ""})
-        data = pd.read_csv(job.csv_data)
-        job.csv_data.close()
+        data = pd.read_pickle(job.data)
+        job.data.close()
         return JsonResponse({"label": list(data.columns)})
 
     if request.method == "POST":
         file = request.FILES.get("test")
-        if not csv_check(file):
-            JsonResponse({"label": ""})
-        data = pd.read_csv(file)
+        status, df = preprocess([], file)
+        if status:
+            data = df
+        else:
+            return JsonResponse({"label": ""})
         return JsonResponse({"label": list(data.columns)})
 
 

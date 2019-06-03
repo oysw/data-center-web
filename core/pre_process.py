@@ -5,7 +5,7 @@ import pandas as pd
 from matminer.featurizers import structure
 
 
-def csv_preprocess(option, file):
+def preprocess(option, file):
     """
     Remove the NaN
     Change the columns of dataframe and calculate chemical features
@@ -13,13 +13,19 @@ def csv_preprocess(option, file):
     """
     try:
         file.seek(0)
-        df = pd.read_csv(file)
-    except AttributeError as e:
-        file.close()
-        return False, e
-    except UnicodeDecodeError as e:
-        file.close()
-        return False, e
+        df = pd.read_pickle(file, compression=None)
+    except Exception as e:
+        print(e)
+        try:
+            file.seek(0)
+            df = pd.read_json(file)
+        except ValueError:
+            try:
+                file.seek(0)
+                df = pd.read_csv(file)
+            except Exception as e:
+                print(e)
+                return False, "File type is not supported"
     if not option:
         df = df.dropna(axis=0, how="all").dropna(axis=1)
     else:

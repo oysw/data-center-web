@@ -15,7 +15,10 @@
                 <h2 class="text-center">Please Upload the file</h2>
                 <div style="height: 30px"></div>
                 <div id="file" class="form-group">
-                    <label>file：</label>
+                    <label>File：</label>
+                    <div class="alert alert-warning" role="alert">
+                        <label>Support file type: csv, json, pickle</label>
+                    </div>
                     <input type="file" name='file'>
                     <span style="color: red">{{ error }}</span>
                 </div>

@@ -15,24 +15,6 @@ from django.utils.crypto import get_random_string
 from . import post_process
 
 
-def csv_check(file):
-    """
-    check if a file is csv, but maybe xyz file will pass
-    :param file:
-    :return:
-    """
-    suffix = file.name.split(".")[-1]
-    if suffix != "csv":
-        return False
-    try:
-        pd.read_csv(file)
-        file.seek(0)
-        return True
-    except Exception as e:
-        print(e)
-        return False
-
-
 def draw_pic(request):
     """
     load data and assign plotting task
@@ -42,7 +24,7 @@ def draw_pic(request):
     option = request.POST
     model_id = option["id"]
     job = Job.objects.get(id=model_id)
-    data = pd.read_csv(job.csv_data)
+    data = pd.read_pickle(job.data)
     x = data[data.columns[0: -1]]
     y = data[data.columns[-1]]
     mod = joblib.load(job.mod.file)
@@ -54,7 +36,7 @@ def draw_pic(request):
     elif option["chooseData"] == '2':
         file = request.FILES.get("test")
         try:
-            x_test = pd.read_csv(file)
+            x_test = pd.read_pickle(file)
         except Exception as _e:
             print(_e)
             return "", "Uploaded file is invalid.", ""
@@ -202,7 +184,7 @@ def calculate():
         return
     job = job_list.first()
     try:
-        data = pd.read_csv(job.csv_data)
+        data = pd.read_pickle(job.data)
     except Exception as e:
         job_error(job, e)
         return

@@ -11,7 +11,7 @@ class Job(models.Model):
         ('C', 'Calculating'),
     )
     owner = models.CharField(max_length=150)
-    csv_data = models.FileField(blank=True, upload_to='raw/')
+    data = models.FileField(blank=True, upload_to='raw/')
     mod = models.FileField(blank=True, upload_to='result/')
     create_time = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10, default='P', choices=STATUS)
