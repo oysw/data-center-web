@@ -6,6 +6,30 @@
 {% endblock %}
 
 {% block content %}
+    <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h2 class="modal-title" id="myModalLabel">Confirmation</h2>
+                </div>
+                <form action="/submit/" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div id="calcList">
+                        </div>
+                        <button type="button" class="btn btn-default" onclick="selectAll()">select all</button>
+                        <button type="reset" class="btn btn-danger">reset</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">
+                            confirm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <input id="jobId" type="hidden" value="{{ job_id }}">
     <div id="upload" class="container" style="display: none">
     <div style="height: 70px"></div>
@@ -36,9 +60,9 @@
                 <br>
                 <div class="alert alert-warning" role="alert">
                     <label>Please confirm and check the value above before submission!</label>
-                    <div class="pull-right" style="clear: both">
-                        <a class="btn btn-primary" href="/submit/">submit</a>
-                    </div>
+                    <button type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".bs-example-modal-lg">
+                        submit
+                    </button>
                 </div>
             </div>
             <div class="col-lg-4">
@@ -82,12 +106,13 @@
             else {
                 $("#upload").removeAttr("style");
             }
-            createChoice()
         });
 
         // Add style when loading new table
         function decorateTable() {
-            $("table").addClass("table table-striped table-bordered text-nowrap")
+            $("table").addClass("table table-striped table-bordered text-nowrap");
+            createChoice();
+            createCalcList()
         }
 
         // Create structure choice while refresh table
@@ -138,6 +163,55 @@
         // Change the name of dom
         function changeName(ele) {
             ele.name = $(ele).val();
+        }
+
+        // Create calculate choice list
+        function createCalcList() {
+            let row = $(".table").children("tbody").children("tr");
+            let firstRow = $(row[0]);
+            let cellVals = firstRow.children("td");
+            let numList = [];
+            for (let i = 0; i < cellVals.length; i++){
+                let cellVal = $(cellVals[i]).html();
+                cellVal = Number(cellVal);
+                if (isNaN(cellVal)){}
+                else {
+                    numList.push(i)
+                }
+            }
+            let headRow = $(".table").children("thead").children("tr").children("th");
+            let headList = [];
+            for (let i = 0; i < headRow.length; i++){
+                let head = $(headRow[i]).html();
+                if (head != ""){
+                    headList.push(head)
+                }
+            }
+            let calcList = [];
+            for (let i = 0; i < numList.length; i++){
+                let index = numList[i];
+                calcList.push(headList[index])
+            }
+            // Create checkbox
+            let str = '';
+            for (let i = 0; i < calcList.length; i++){
+                if (calcList.length == 0){
+                    str += "No columns available";
+                    break
+                }
+                let column = calcList[i];
+                str += '<div class="checkbox"><label><input name=' + column + ' type="checkbox">';
+                str += column + '</label></div>'
+            } 
+            $("#calcList").html(str)
+        }
+        
+        // Select all checkbox
+        function selectAll() {
+            let checkboxes = $("#calcList").find("input");
+            for (let i = 0; i < checkboxes.length; i++){
+                $(checkboxes[i]).click();
+            }
         }
     </script>
 {% endblock %}

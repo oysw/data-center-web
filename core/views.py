@@ -146,8 +146,21 @@ def submit(request):
     :param request:
     :return:
     """
+    columns = list(request.POST)[1:]
     job_id = request.session["job_id"]
+    file_path = request.session["job_file_path"]
     job = Job.objects.get(id=job_id)
+    df = pd.read_pickle(job.data, compression=None)
+    df = df[columns]
+    job.data.close()
+    try:
+        os.remove(MEDIA_ROOT + file_path)
+    except FileNotFoundError:
+        pass
+    f = File(BytesIO())
+    df.to_pickle(f, compression=None)
+    f.name = file_path.split("/")[-1]
+    job.data = f
     job.status = "W"
     job.save()
     try:
