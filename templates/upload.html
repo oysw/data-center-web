@@ -18,8 +18,12 @@
                     <div class="modal-body">
                         <div id="calcList">
                         </div>
-                        <button type="button" class="btn btn-default" onclick="selectAll()">select all</button>
-                        <button type="reset" class="btn btn-danger">reset</button>
+                        <button type="button" class="btn btn-default" onclick="selectAll(this)">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                        <button type="reset" class="btn btn-danger">
+                            <span class="glyphicon glyphicon-refresh"></span>
+                        </button>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary">
@@ -53,7 +57,7 @@
     </div>
     <div id="preprocess" class="container" style="display: none">
         <div class="row">
-            <div class="col-lg-8">
+            <div class="col-lg-6">
                 <div id="table" class="table-responsive" style="height: 500px">
                     {{ html }}
                 </div>
@@ -65,38 +69,111 @@
                     </button>
                 </div>
             </div>
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <form action="/upload/" method="get">
                     <div class="form-group">
                         <label>Structure volume:</label>
                         <select id="structureColumn" onchange="changeName(this)">
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="checkbox-inline">
-                            <input type="checkbox" name="RadialDistributionFunction">
-                            RadialDistributionFunction
-                        </label>
+                    <div class="progress" style="display: none">
+                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                            <span>Processing</span>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label class="checkbox-inline">
-                            <input type="checkbox" name="PartialRadialDistributionFunction">
-                            PartialRadialDistributionFunction
-                        </label>
+                        <button type="button" class="btn btn-default" onclick="selectAll(this)">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                        <button type="reset" class="btn btn-default">
+                            <span class="glyphicon glyphicon-refresh"></span>
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="featurize(this.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                        <br>
+                        <div id="structureFeaturizers"></div>
                     </div>
                     <div class="progress" style="display: none">
                         <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
                             <span>Processing</span>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-success" onclick="featurize(this.parentNode)">calculate</button>
-                    <button type="reset" class="btn btn-danger">reset</button>
+                </form>
+            </div>
+            <div class="col-lg-3">
+                <form action="/upload/" method="get">
+                    <div class="form-group">
+                        <label>Composition volume:</label>
+                        <select id="compositionColumn" onchange="changeName(this)">
+                        </select>
+                    </div>
+                    <div class="progress" style="display: none">
+                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                            <span>Processing</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-default" onclick="selectAll(this)">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                        <button type="reset" class="btn btn-default">
+                            <span class="glyphicon glyphicon-refresh"></span>
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="featurize(this.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                        <br>
+                        <div class="form-group" id="compositionFeaturizers"></div>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
     <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
     <script type="text/javascript">
+    let structureFeaturizers = [
+        "DensityFeatures",
+        "GlobalSymmetryFeatures",
+        "Dimensionality",
+        "RadialDistributionFunction",
+        "PartialRadialDistributionFunction",
+        "ElectronicRadialDistributionFunction",
+        "CoulombMatrix",
+        "SineCoulombMatrix",
+        "OrbitalFieldMatrix",
+        "MinimumRelativeDistances",
+        "SiteStatsFingerprint",
+        "EwaldEnergy",
+        "BondFractions",
+        "BagofBonds",
+        "StructuralHeterogeneity",
+        "MaximumPackingEfficiency",
+        "ChemicalOrdering",
+        "StructureComposition",
+        "XRDPowderPattern",
+        "CGCNNFeaturizer",
+        "JarvisCFID",
+        "SOAP",
+        "GlobalInstabilityIndex"
+    ];
+    let compositionFeaturizers = [
+        "OxidationStates",
+        "AtomicOrbitals",
+        "BandCenter",
+        "ElectronegativityDiff",
+        "ElectronAffinity",
+        "Stoichiometry",
+        "ValenceOrbital",
+        "IonProperty",
+        "ElementFraction",
+        "TMetalFraction",
+        "CohesiveEnergy",
+        "Miedema",
+        "YangSolidSolution",
+        "AtomicPackingEfficiency"
+    ];
+
         $(document).ready(function(){
             let jobId = $("#jobId").val();
             if (jobId != ""){
@@ -106,13 +183,38 @@
             else {
                 $("#upload").removeAttr("style");
             }
+            createFeaturizersList();
+            createChoice();
         });
 
         // Add style when loading new table
         function decorateTable() {
             $("table").addClass("table table-striped table-bordered text-nowrap");
-            createChoice();
             createCalcList()
+        }
+
+        // Create featurizers choice both for composition and structure
+        function createFeaturizersList() {
+            let strFeaturizers = "";
+            for (let i = 0; i < structureFeaturizers.length; i++){
+                strFeaturizers += '<div class="form-group">' +
+                    '<label class="checkbox-inline">' +
+                    '<input type="checkbox" name="' + structureFeaturizers[i] + '">' +
+                    structureFeaturizers[i] +
+                    '</label>' +
+                    '</div>'
+            }
+            $("#structureFeaturizers").html(strFeaturizers);
+            let comFeaturizers = "";
+            for (let i = 0; i < compositionFeaturizers.length; i++){
+                comFeaturizers += '<div class="form-group">' +
+                    '<label class="checkbox-inline">' +
+                    '<input type="checkbox" name="' + compositionFeaturizers[i] + '">' +
+                    compositionFeaturizers[i] +
+                    '</label>' +
+                    '</div>'
+            }
+            $("#compositionFeaturizers").html(comFeaturizers)
         }
 
         // Create structure choice while refresh table
@@ -125,14 +227,16 @@
                 if (html != ""){
                     str += '<option value="' + html + '">' + html + '</option>'
                 }
-                $("#structureColumn").html(str)
+                $("#structureColumn").html(str);
+                $("#compositionColumn").html(str);
             }
         }
 
         // Calculate new chemical features
         function featurize(option) {
-            $(".progress").removeAttr("style");
-            let opt = $(option).serializeArray();
+            let progress = $(option).siblings(".progress");
+            progress.removeAttr("style");
+            let opt = $(option).parent().serializeArray();
             let optList = "?";
             for (let i = 0; i < opt.length; i++){
                 optList += opt[i]["name"];
@@ -151,10 +255,10 @@
                         $("#table").html(html);
                         decorateTable();
                     }
-                    $(".progress").attr("style", "display: none")
+                    progress.attr("style", "display: none")
                 },
                 error:function (msg) {
-                    $(".progress").attr("style", "display: none");
+                    progress.attr("style", "display: none");
                     console.log(msg)
                 }
             })
@@ -207,8 +311,8 @@
         }
         
         // Select all checkbox
-        function selectAll() {
-            let checkboxes = $("#calcList").find("input");
+        function selectAll(ele) {
+            let checkboxes = $(ele).siblings().find("input");
             for (let i = 0; i < checkboxes.length; i++){
                 $(checkboxes[i]).click();
             }
