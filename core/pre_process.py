@@ -29,6 +29,8 @@ def preprocess(option, file):
             except Exception as e:
                 print(e)
                 return False, "File type is not supported"
+    finally:
+        file.close()
     if not option:
         df = df.dropna(axis=0, how="all").dropna(axis=1)
     else:
@@ -40,38 +42,46 @@ def preprocess(option, file):
             columns.remove(option[0])
             columns.insert(col_index, option[1])
             df.columns = columns
-            file.close()
-            return True, df
         elif structure_info == "strToStructure":
             target_col = option[0]
             try:
                 df[target_col] = [Structure.from_str(i, 'json') for i in df[target_col]]
             except Exception as e:
-                file.close()
                 return False, repr(e)
-            file.close()
-            return True, df
         elif structure_info == "structureToComposition":
             target_col = option[0]
             try:
                 df = StructureToComposition().featurize_dataframe(df, target_col)
             except Exception as e:
-                file.close()
                 return False, repr(e)
-            file.close()
-            return True, df
-        for i in option:
-            try:
-                featurizer = structure.__dict__[i]()
-            except KeyError:
+        else:
+            for i in option:
                 try:
-                    featurizer = composition.__dict__[i]()
+                    featurizer = structure.__dict__[i]()
                 except KeyError:
-                    break
-            try:
-                df = featurizer.featurize_dataframe(df, structure_info)
-            except Exception as e:
-                file.close()
-                return False, repr(e)
-    file.close()
+                    try:
+                        featurizer = composition.__dict__[i]()
+                    except KeyError:
+                        break
+                try:
+                    df = featurizer.featurize_dataframe(df, structure_info)
+                except Exception as e:
+                    return False, repr(e)
+    df = space_check(df)
     return True, df
+
+
+def space_check(dataframe):
+    """
+    Since it's hard for form submission if there are spaces. We need to convert
+    space to _.
+    :param dataframe:
+    :return:
+    """
+    df = dataframe
+    columns = list(df.columns)
+    new_col = []
+    for i in columns:
+        new_col.append(i.replace(" ", "_"))
+    df.columns = new_col
+    return df
