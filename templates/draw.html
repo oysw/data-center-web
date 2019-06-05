@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block title %}数据中心{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row" style="border: 1px solid #ddd; border-radius: 5px 5px 0 0;">
+            <form class="form-horizontal">
+                <div class="form-group">
+                    <label class="col-lg-offset-1" style="font-size: xx-large">Plot Raw Data</label>
+                </div>
+                {% csrf_token %}
+                <input id="modelId" name="id" type="hidden" value="{{ jobId }}">
+                <div class="form-group">
+                    <label class="col-lg-1 control-label">Title</label>
+                    <div class="col-lg-3">
+                        <input class="form-control" name="title">
+                    </div>
+                    <label class="col-lg-2 control-label">Raw color</label>
+                    <div class="col-lg-2">
+                        <input type="color" class="form-control" name="raw_color">
+                    </div>
+                    <label class="col-lg-2 control-label">Predict color</label>
+                    <div class="col-lg-2">
+                        <input type="color" class="form-control" name="predict_color">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-lg-2 control-label">Features 1</label>
+                    <div class="col-lg-2">
+                        <select name="feature_1" class="form-control"></select>
+                    </div>
+                    <label class="col-lg-2 control-label">Features 2</label>
+                    <div class="col-lg-2">
+                        <select name="feature_2" class="form-control"></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-lg-1 control-label"></label>
+                    <div class="col-lg-4">
+                        <button class="btn btn-default" type="button" onclick="showImage()">Plot</button>
+                        <button class="btn btn-danger" type="reset" value="reset" onclick="clean()">Reset</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="row" style="border: 1px solid #ddd; border-radius: 0 0 5px 5px;">
+            <form class="form-horizontal">
+                {% csrf_token %}
+                <input id="modelId" name="id" type="hidden" value="{{ jobId }}">
+                <div class="form-group">
+                    <label style="font-size: xx-large" class="col-lg-offset-1">Plot Uploaded Data</label>
+                </div>
+                <div class="form-group">
+                    <label class="col-lg-1 control-label">Test file</label>
+                    <div class="col-lg-3">
+                        <input class="form-control" name="uploadFile" type="file" onchange="uploadFeature(this)">
+                    </div>
+                    <div class="col-lg-3">
+                        <button type="button" class="btn btn-default">Upload</button>
+                        <button type="button" class="btn btn-success">Preview</button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal">
+                {% csrf_token %}
+                <input id="modelId" name="id" type="hidden" value="{{ jobId }}">
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Convert string to structure</label>
+                    <div class="col-lg-2">
+                        <select class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Convert structure to composition</label>
+                    <div class="col-lg-2">
+                        <select class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal">
+                {% csrf_token %}
+                <input id="modelId" name="id" type="hidden" value="{{ jobId }}">
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Featurize structure</label>
+                    <div class="col-lg-2">
+                        <select class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <select class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal">
+                {% csrf_token %}
+                <input id="modelId" name="id" type="hidden" value="{{ jobId }}">
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Featurize composition</label>
+                    <div class="col-lg-2">
+                        <select class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <select class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <br>
+        <div class="container">
+            <iframe id="fitImage" style="width: 100%; height: 800px"></iframe>
+        </div>
+        <br>
+        <div class="row col-lg-offset-1">
+            <a id="downloadPredict" class="btn btn-success" style="display: none" href="#">Download predict file</a>
+        </div>
+    </div> <!-- /container -->
+    <script>
+    // Choose the data to create graph
+    function choose() {
+        let data = $("#chooseData").val();
+        if (data == "1") {
+            $("#uploadData").attr("style", "display:none");
+            $.ajax({
+                url: "/detail?model_id=" + $("#modelId").val(),
+                type: "GET",
+                success: function (retVal) {
+                    let label = retVal["label"];
+                    if (label == "") {
+                        alert("You job is currently not available.")
+                    }
+                    else {
+                        label.splice(label.length - 1);
+                        createFeatureList(label)
+                    }
+                }
+            })
+        }
+        else if (data == "2"){
+            $("#feature_1").children("select").html("");
+            $("#feature_2").children("select").html("");
+            $("#uploadData").removeAttr("style")
+        }
+        else {
+            $("#uploadData").attr("style", "display:none");
+        }
+    }
+
+    // Get the shape of upload file
+    function uploadFeature(ele){
+        let file = ele.files[0];
+        let formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('test', file);
+        $.ajax({
+            url: "/detail/",
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (retVal) {
+                let label = retVal["label"];
+                createFeatureList(label)
+            }
+        })
+    }
+
+    // Create features list according to the shape of test set
+    function createFeatureList(label) {
+        let html_str = "<option value='0'>None</option>";
+        for (let i = 1; i <= label.length; i++){
+            let str = '<option value=' + i + '>' + label[i - 1] + '</option>';
+            html_str += str
+        }
+        $("#feature_1").children("select").html(html_str);
+        $("#feature_2").children("select").html(html_str);
+    }
+
+    // Draw the graph
+    function showImage() {
+        let obj = $("#plotOptions").serializeArray();
+        let formData = new FormData();
+        $.each(obj, function (i, field) {
+            formData.append(field["name"], field["value"])
+        });
+        let file = $("#uploadData").children("input")[0].files[0];
+        if (typeof(file) != "undefined"){
+            formData.append("test", file)
+        }
+        $.ajax({
+            url: "/draw/",
+            type: "POST",
+            data: formData,
+            dataType:"JSON",
+            contentType: false,
+            processData: false,
+            success: function (retVal) {
+                if (retVal["err"] != ""){
+                    alert(retVal["err"])
+                }
+                else {
+                    let fig = document.getElementById("fitImage").contentDocument;
+                    fig.open();
+                    fig.write(retVal["image"]);
+                    fig.close();
+                    let fileName = retVal["file"].split(".")[0];
+                    let href = "/download?file=" + fileName;
+                    let downloadBtn = $("#downloadPredict");
+                    downloadBtn.attr("href", href);
+                    downloadBtn.removeAttr("style");
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, msg) {
+                alert(msg)
+            }
+        })
+    }
+
+    let structureFeaturizers = [
+        "DensityFeatures",
+        "GlobalSymmetryFeatures",
+        "Dimensionality",
+        "RadialDistributionFunction",
+        "PartialRadialDistributionFunction",
+        "ElectronicRadialDistributionFunction",
+        "CoulombMatrix",
+        "SineCoulombMatrix",
+        "OrbitalFieldMatrix",
+        "MinimumRelativeDistances",
+        "SiteStatsFingerprint",
+        "EwaldEnergy",
+        "BondFractions",
+        "BagofBonds",
+        "StructuralHeterogeneity",
+        "MaximumPackingEfficiency",
+        "ChemicalOrdering",
+        "StructureComposition",
+        "XRDPowderPattern",
+        "CGCNNFeaturizer",
+        "JarvisCFID",
+        "SOAP",
+        "GlobalInstabilityIndex"
+    ];
+    let compositionFeaturizers = [
+        "OxidationStates",
+        "AtomicOrbitals",
+        "BandCenter",
+        "ElectronegativityDiff",
+        "ElectronAffinity",
+        "Stoichiometry",
+        "ValenceOrbital",
+        "IonProperty",
+        "ElementFraction",
+        "TMetalFraction",
+        "CohesiveEnergy",
+        "Miedema",
+        "YangSolidSolution",
+        "AtomicPackingEfficiency"
+    ];
+    </script>
+{% endblock %}

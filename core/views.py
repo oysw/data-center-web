@@ -208,6 +208,9 @@ def draw(request):
         if request.method == "POST":
             pic, err, file = draw_pic(request)
             return JsonResponse({"image": pic, "err": err, "file": file})
+    else:
+        job_id = request.GET["jobId"]
+        return render(request, "draw.html", {"jobId": job_id})
 
 
 def data_detail(request):

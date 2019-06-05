@@ -6,80 +6,6 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog" style="width: auto">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="closeWindow()">&times;</button>
-                    <h4 class="modal-title" id="myModalLabel">Plot</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <form id="plotOptions" enctype="multipart/form-data" class="col-lg-offset-1">
-                            {% csrf_token %}
-                            <input id="modelId" name="id" type="hidden">
-                            <div class="row">
-                                <div class="col-lg-3">
-                                    <label>Title</label>
-                                    <input class="form-control" name="title">
-                                </div>
-                                <div class="col-lg-2">
-                                    <label>Raw_color</label>
-                                    <input type="color" class="form-control" name="raw_color">
-                                </div>
-                                <div class="col-lg-2">
-                                    <label>Predict_color</label>
-                                    <input type="color" class="form-control" name="predict_color">
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-lg-2">
-                                    <label>Data for graph</label>
-                                    <select id="chooseData" name="chooseData" class="form-control" onchange="choose()">
-                                        <option value="0">Choose data</option>
-                                        <option value="1">Training data</option>
-                                        <option value="2">Upload new data</option>
-                                    </select>
-                                </div>
-                                <div id="uploadData" class="col-lg-3" style="display: none">
-                                    <label>test</label>
-                                    <input class="form-control" name="test" type="file" onchange="uploadFeature(this)">
-                                </div>
-                                <div id="feature_1" class="col-lg-2">
-                                    <label>Features_1</label>
-                                    <select name="feature_1" class="form-control"></select>
-                                </div>
-                                <div id="feature_2" class="col-lg-2">
-                                    <label>Features_2</label>
-                                    <select name="feature_2" class="form-control"></select>
-                                </div>
-                            </div>
-                            <br>
-                            <div class="row">
-                                <div class="col-lg-1">
-                                    <input class="btn btn-primary btn-block" type="button" onclick="showImage()" value="plot">
-                                </div>
-                                <div class="col-lg-1">
-                                    <input id="reset" class="btn btn-danger btn-block" type="reset" value="reset" onclick="clean()">
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <br>
-                    <div class="container">
-                        <iframe id="fitImage" style="width: 100%; height: 800px"></iframe>
-                    </div>
-                    <br>
-                    <div class="row col-lg-offset-1">
-                        <a id="downloadPredict" class="btn btn-success" style="display: none" href="#">Download predict file</a>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="closeWindow()">Close</button>
-                </div>
-            </div><!-- /.modal-content -->
-        </div><!-- /.modal -->
-    </div>
     <a class="pull-right" style="margin: 5px" href="/result/">
         <button class="btn btn-primary" type="button">Refresh</button>
     </a>
@@ -94,9 +20,12 @@
                 <td>{{ job.owner }}</td>
                 <td>
                     {% if job.mod != '' %}
-                    <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#myModal" onclick="prePlot(this)">
-                        {{ job.mod }}<input type="hidden" value="{{ job.id }}">
-                    </button>
+                        <form action="/draw/" method="get">
+                            <input name="jobId" type="hidden" value="{{ job.id }}">
+                            <button type="submit" class="btn btn-primary btn-xs">
+                                {{ job.mod }}
+                            </button>
+                        </form>
                     {% else %}
                     <div>Not available</div>
                     {% endif %}
@@ -106,125 +35,4 @@
         {% endfor %}
     </table>
     <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
-    <script>
-    // clean the page before create graph
-    function prePlot(ele) {
-        $('#fitImage').attr('src', '');
-        let eleModelId = $('#modelId');
-        eleModelId.val('');
-        let modelId = $(ele).children('input').val();
-        eleModelId.val(modelId)
-    }
-
-    // Choose the data to create graph
-    function choose() {
-        let data = $("#chooseData").val();
-        if (data == "1") {
-            $("#uploadData").attr("style", "display:none");
-            $.ajax({
-                url: "/detail?model_id=" + $("#modelId").val(),
-                type: "GET",
-                success: function (retVal) {
-                    let label = retVal["label"];
-                    if (label == "") {
-                        alert("You job is currently not available.")
-                    }
-                    else {
-                        label.splice(label.length - 1);
-                        createFeatureList(label)
-                    }
-                }
-            })
-        }
-        else if (data == "2"){
-            $("#feature_1").children("select").html("");
-            $("#feature_2").children("select").html("");
-            $("#uploadData").removeAttr("style")
-        }
-        else {
-            $("#uploadData").attr("style", "display:none");
-        }
-    }
-
-    // Get the shape of upload file
-    function uploadFeature(ele){
-        let file = ele.files[0];
-        let formData = new FormData();
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        formData.append('test', file);
-        $.ajax({
-            url: "/detail/",
-            type: "POST",
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function (retVal) {
-                let label = retVal["label"];
-                createFeatureList(label)
-            }
-        })
-    }
-
-    // Create features list according to the shape of test set
-    function createFeatureList(label) {
-        let html_str = "<option value='0'>None</option>";
-        for (let i = 1; i <= label.length; i++){
-            let str = '<option value=' + i + '>' + label[i - 1] + '</option>';
-            html_str += str
-        }
-        $("#feature_1").children("select").html(html_str);
-        $("#feature_2").children("select").html(html_str);
-    }
-
-    // Draw the graph
-    function showImage() {
-        let obj = $("#plotOptions").serializeArray();
-        let formData = new FormData();
-        $.each(obj, function (i, field) {
-            formData.append(field["name"], field["value"])
-        });
-        let file = $("#uploadData").children("input")[0].files[0];
-        if (typeof(file) != "undefined"){
-            formData.append("test", file)
-        }
-        $.ajax({
-            url: "/draw/",
-            type: "POST",
-            data: formData,
-            dataType:"JSON",
-            contentType: false,
-            processData: false,
-            success: function (retVal) {
-                if (retVal["err"] != ""){
-                    alert(retVal["err"])
-                }
-                else {
-                    let fig = document.getElementById("fitImage").contentDocument;
-                    fig.open();
-                    fig.write(retVal["image"]);
-                    fig.close();
-                    let fileName = retVal["file"].split(".")[0];
-                    let href = "/download?file=" + fileName;
-                    let downloadBtn = $("#downloadPredict");
-                    downloadBtn.attr("href", href);
-                    downloadBtn.removeAttr("style");
-                }
-            },
-            error: function (XMLHttpRequest, textStatus, msg) {
-                alert(msg)
-            }
-        })
-    }
-
-    function clean() {
-        $("#downloadPredict").attr("style", "display:none");
-        $("#fitImage").attr("src", "");
-        $("#uploadData").attr("style", "display:none");
-    }
-
-    function closeWindow() {
-        $("#reset").click();
-        clean();
-    }
-    </script>
 {% endblock %}
