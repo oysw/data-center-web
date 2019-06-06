@@ -219,25 +219,36 @@ def data_detail(request):
     :param request:
     :return:
     """
+    file_name = MEDIA_ROOT + request.session["username"]
     if request.method == "GET":
-        data = request.GET
-        model_id = int(data["model_id"])
-        try:
+        if "model_id" in request.GET:
+            model_id = int(request.GET["model_id"])
             job = Job.objects.get(id=model_id)
-        except Job.DoesNotExist:
-            return JsonResponse({"label": ""})
-        data = pd.read_pickle(job.data, compression=None)
-        job.data.close()
-        return JsonResponse({"label": list(data.columns)})
-
-    if request.method == "POST":
-        file = request.FILES.get("test")
+            df = pd.read_pickle(job.data, compression=None)
+            job.data.close()
+            return JsonResponse({"label": list(df.columns)})
+        featurizer = request.GET["featurizer"]
+        target = request.GET["targetColumn"]
+        try:
+            value = request.GET["value"]
+        except KeyError:
+            value = ""
+        option = [featurizer, target, value]
+        file = open(file_name, "rb")
+        status, df = preprocess(option, file)
+    else:
+        file = request.FILES.get("uploadFile")
         status, df = preprocess([], file)
-        if status:
-            data = df
-        else:
-            return JsonResponse({"label": ""})
-        return JsonResponse({"label": list(data.columns)})
+    if status:
+        data = df
+        df.to_pickle(file_name, compression=None)
+    else:
+        return JsonResponse({"err": df})
+    return_dict = {
+        "label": list(data.columns),
+        "html": mark_safe(data.to_html())
+    }
+    return JsonResponse(return_dict)
 
 
 def get_result(username):

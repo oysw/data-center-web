@@ -12,6 +12,7 @@ import joblib
 from core.automl.auto_ml import auto_ml
 from django.core.files import File
 from django.utils.crypto import get_random_string
+from dsweb.settings import MEDIA_ROOT
 from . import post_process
 
 
@@ -22,35 +23,45 @@ def draw_pic(request):
     :return:
     """
     option = request.POST
-    model_id = option["id"]
+    model_id = int(option["id"])
     job = Job.objects.get(id=model_id)
     data = pd.read_pickle(job.data, compression=None)
     x = data[data.columns[0: -1]]
     y = data[data.columns[-1]]
     mod = joblib.load(job.mod.file)
 
-    if option["chooseData"] == '1':
+    if option["chooseData"] == 'raw':
         x_test = x
         y_pred = mod.predict(x_test)
 
-    elif option["chooseData"] == '2':
-        file = request.FILES.get("test")
+    elif option["chooseData"] == 'upload':
+        file = MEDIA_ROOT + request.session["username"]
         try:
             x_test = pd.read_pickle(file, compression=None)
         except Exception as _e:
             print(_e)
             return "", "Uploaded file is invalid.", ""
         try:
+            plot_columns = []
+            for key in option:
+                if option[key] == "on":
+                    plot_columns.append(key)
+            x_test = x_test[plot_columns]
             y_pred = mod.predict(x_test)
         except ValueError as _e:
-            return "", "Uploaded file is unacceptable.", ""
+            return "", "Uploaded file is unacceptable or mismatches the shape of raw data.", ""
     else:
         return "", "Please choose a data type", ""
 
     file_name = post_process.predict_file_create(y_pred)
 
-    f1 = option["feature_1"]
-    f2 = option["feature_2"]
+    try:
+        f1 = option["feature_1"]
+        f2 = option["feature_2"]
+    except Exception as e:
+        print(e)
+        f1 = f2 = "0"
+        pass
     if f1 != '0' and f2 != '0':
         return draw_pic_3d(option, x, y, x_test, y_pred), "", file_name
     elif f1 != '0' or f2 != '0':
@@ -70,11 +81,12 @@ def draw_pic_2d(option, x, y, x_test, y_pred):
     :return:
     """
     if option["feature_1"] != '0':
-        plot_feature = int(option["feature_1"]) - 1
+        plot_feature = option["feature_1"]
     else:
-        plot_feature = int(option["feature_2"]) - 1
-    x_test = x_test[x_test.columns[plot_feature]]
-    x = x[x.columns[plot_feature]]
+        plot_feature = option["feature_2"]
+    index = list(x_test.columns).index(plot_feature)
+    x_test = x_test[plot_feature]
+    x = x[list(x.columns)[index]]
 
     trace_raw = go.Scatter(
         x=x,
@@ -118,12 +130,14 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
     :param y_pred:
     :return:
     """
-    plot_feature_1 = int(option["feature_1"]) - 1
-    plot_feature_2 = int(option["feature_2"]) - 1
-    x_test_1 = x_test[x_test.columns[plot_feature_1]]
-    x_test_2 = x_test[x_test.columns[plot_feature_2]]
-    x_1 = x[x.columns[plot_feature_1]]
-    x_2 = x[x.columns[plot_feature_2]]
+    plot_feature_1 = option["feature_1"]
+    plot_feature_2 = option["feature_2"]
+    index_1 = list(x_test.columns).index(plot_feature_1)
+    index_2 = list(x_test.columns).index(plot_feature_2)
+    x_test_1 = x_test[plot_feature_1]
+    x_test_2 = x_test[plot_feature_2]
+    x_1 = x[list(x.columns)[index_1]]
+    x_2 = x[list(x.columns)[index_2]]
 
     trace_raw = go.Scatter3d(
         x=x_1,
@@ -132,7 +146,7 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
         name='raw',
         mode='markers',
         marker=dict(
-            size=5,
+            size=10,
             color=option["raw_color"]
         )
     )

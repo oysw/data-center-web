@@ -34,39 +34,38 @@ def preprocess(option, file):
     if not option:
         df = df.dropna(axis=0, how="all").dropna(axis=1)
     else:
-        structure_info = option[0]
-        option = option[1:]
-        if structure_info == "rename":
+        featurizer = option[0]
+        target = option[1]
+        value = option[2]
+        if featurizer == "rename":
             columns = list(df.columns)
-            col_index = columns.index(option[0])
-            columns.remove(option[0])
-            columns.insert(col_index, option[1])
+            col_index = columns.index(target)
+            columns.remove(target)
+            columns.insert(col_index, value)
             df.columns = columns
-        elif structure_info == "strToStructure":
-            target_col = option[0]
+        elif featurizer == "strToStructure":
             try:
-                df[target_col] = [Structure.from_str(i, 'json') for i in df[target_col]]
+                df[target] = [Structure.from_str(i, 'json') for i in df[target]]
             except Exception as e:
                 return False, repr(e)
-        elif structure_info == "structureToComposition":
-            target_col = option[0]
+        elif featurizer == "structureToComposition":
             try:
-                df = StructureToComposition().featurize_dataframe(df, target_col)
+                df = StructureToComposition().featurize_dataframe(df, target)
             except Exception as e:
                 return False, repr(e)
         else:
-            for i in option:
+            try:
+                convert = structure.__dict__[featurizer]()
+            except KeyError:
                 try:
-                    featurizer = structure.__dict__[i]()
+                    convert = composition.__dict__[featurizer]()
                 except KeyError:
-                    try:
-                        featurizer = composition.__dict__[i]()
-                    except KeyError:
-                        break
-                try:
-                    df = featurizer.featurize_dataframe(df, structure_info)
-                except Exception as e:
-                    return False, repr(e)
+                    df = space_check(df)
+                    return True, df
+            try:
+                df = convert.featurize_dataframe(df, target)
+            except Exception as e:
+                return False, repr(e)
     df = space_check(df)
     return True, df
 

@@ -57,83 +57,10 @@
     </div>
     <div id="preprocess" class="container" style="display: none">
         <div class="row">
-            <label class="col-lg-offset-2" style="font-size: xx-large">Preview</label>
-            <label class="col-lg-offset-4" style="font-size: xx-large">Conversion</label>
-        </div>
-        <div class="row">
             <div class="col-lg-6">
+                <label class="col-lg-offset-4" style="font-size: xx-large">Preview</label>
                 <div id="table" class="table-responsive" style="height: 500px">
                     {{ html }}
-                </div>
-                <label class="col-lg-offset-4" style="font-size: xx-large">Toolkit</label>
-                <div style="border: 1px solid #ddd; border-radius: 5px 5px 0 0;">
-                    <br>
-                    <form class="form-horizontal" action="/upload/" method="get">
-                        <div class="form-group">
-                            <input type="hidden" name="rename">
-                            <label class="col-lg-4 control-label">Rename volume:</label>
-                            <div class="col-lg-4">
-                                <select id="renameColumn" class="form-control" onchange="changeName(this)"></select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-lg-4 control-label">New name:</label>
-                            <div class="col-lg-4">
-                                <input class="form-control" name="newName" onchange="changeName(this)">
-                            </div>
-                            <div class="col-lg-2">
-                                <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
-                                    <span class="glyphicon glyphicon-play"></span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="progress" style="display: none">
-                            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                                <span>Processing</span>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div style="border: 1px solid #ddd; border-radius: 0 0 5px 5px;">
-                    <br>
-                    <form class="form-horizontal" action="/upload/" method="get">
-                        <div class="form-group">
-                            <label class="col-lg-6 control-label">Convert string to structure:</label>
-                            <input type="hidden" name="strToStructure">
-                            <div class="col-lg-4">
-                                <select id="strToStructure" class="form-control" onchange="changeName(this)"></select>
-                            </div>
-                            <div class="col-lg-2">
-                                <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
-                                    <span class="glyphicon glyphicon-play"></span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="progress" style="display: none">
-                            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                                <span>Processing</span>
-                            </div>
-                        </div>
-                    </form>
-                    <form class="form-horizontal" action="/upload/" method="get">
-                        <div class="form-group">
-                            <label class="col-lg-6 control-label">Convert structure to composition:</label>
-                            <input type="hidden" name="structureToComposition">
-                            <div class="col-lg-4">
-                                <select id="structureToComposition" class="form-control" onchange="changeName(this)"></select>
-                            </div>
-                            <div class="col-lg-2">
-                                <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
-                                    <span class="glyphicon glyphicon-play"></span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="progress" style="display: none">
-                            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                                <span>Processing</span>
-                            </div>
-                        </div>
-                    </form>
                 </div>
                 <div class="alert alert-warning" role="alert">
                     <label>Please confirm and check the value above before submission!</label>
@@ -142,109 +69,101 @@
                     </button>
                 </div>
             </div>
-            <div class="col-lg-3">
-                <form action="/upload/" method="get">
+            <div class="col-lg-6">
+                <label class="col-lg-offset-4" style="font-size: xx-large">Conversion</label>
+                <br>
+                <form class="form-horizontal">
                     <div class="form-group">
-                        <label>Structure volume:</label>
-                        <select id="structureColumn" onchange="changeName(this)">
-                        </select>
-                    </div>
-                    <div class="progress" style="display: none">
-                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                            <span>Processing</span>
+                        <label class="col-lg-4 control-label">Featurize structure</label>
+                        <div class="col-lg-3">
+                            <select name="targetColumn" class="form-control"></select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-default" onclick="selectAll(this)">
-                            <span class="glyphicon glyphicon-plus"></span>
-                        </button>
-                        <button type="reset" class="btn btn-default">
-                            <span class="glyphicon glyphicon-refresh"></span>
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="featurize(this.parentNode)">
-                            <span class="glyphicon glyphicon-play"></span>
-                        </button>
-                        <div id="structureFeaturizers"></div>
-                    </div>
-                    <div class="progress" style="display: none">
-                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                            <span>Processing</span>
+                        <div class="col-lg-3">
+                            <select name="featurizer" class="form-control"></select>
+                        </div>
+                        <div class="col-lg-1">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
                         </div>
                     </div>
                 </form>
-            </div>
-            <div class="col-lg-3">
-                <form action="/upload/" method="get">
+                <br>
+                <form class="form-horizontal">
                     <div class="form-group">
-                        <label>Composition volume:</label>
-                        <select id="compositionColumn" onchange="changeName(this)">
-                        </select>
-                    </div>
-                    <div class="progress" style="display: none">
-                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                            <span>Processing</span>
+                        <label class="col-lg-4 control-label">Featurize composition</label>
+                        <div class="col-lg-3">
+                            <select name="targetColumn" class="form-control"></select>
+                        </div>
+                        <div class="col-lg-3">
+                            <select name="featurizer" class="form-control"></select>
+                        </div>
+                        <div class="col-lg-1">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
                         </div>
                     </div>
+                </form>
+                <br>
+                <label class="col-lg-offset-4" style="font-size: xx-large">Toolkit</label>
+                <br>
+                <form class="form-horizontal" action="/upload/" method="get">
                     <div class="form-group">
-                        <button type="button" class="btn btn-default" onclick="selectAll(this)">
-                            <span class="glyphicon glyphicon-plus"></span>
-                        </button>
-                        <button type="reset" class="btn btn-default">
-                            <span class="glyphicon glyphicon-refresh"></span>
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="featurize(this.parentNode)">
-                            <span class="glyphicon glyphicon-play"></span>
-                        </button>
-                        <div class="form-group" id="compositionFeaturizers"></div>
+                        <input type="hidden" name="rename">
+                        <label class="col-lg-3 control-label">Rename volume:</label>
+                        <div class="col-lg-3">
+                            <select id="renameColumn" class="form-control" onchange="changeName(this)"></select>
+                        </div>
+                        <div class="col-lg-4">
+                            <input class="form-control" name="newName" onchange="changeName(this)">
+                        </div>
+                        <div class="col-lg-1">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
+                        </div>
                     </div>
                 </form>
+                <form class="form-horizontal" action="/upload/" method="get">
+                    <div class="form-group">
+                        <label class="col-lg-6 control-label">Convert string to structure:</label>
+                        <input type="hidden" name="strToStructure">
+                        <div class="col-lg-4">
+                            <select id="strToStructure" class="form-control" onchange="changeName(this)"></select>
+                        </div>
+                        <div class="col-lg-2">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <form class="form-horizontal" action="/upload/" method="get">
+                    <div class="form-group">
+                        <label class="col-lg-6 control-label">Convert structure to composition:</label>
+                        <input type="hidden" name="structureToComposition">
+                        <div class="col-lg-4">
+                            <select id="structureToComposition" class="form-control" onchange="changeName(this)"></select>
+                        </div>
+                        <div class="col-lg-2">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div class="progress" style="display: none">
+                    <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                        <span>Processing</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+    <script src="{% static 'js/preprocess.js' %}"></script>
     <script type="text/javascript">
-    let structureFeaturizers = [
-        "DensityFeatures",
-        "GlobalSymmetryFeatures",
-        "Dimensionality",
-        "RadialDistributionFunction",
-        "PartialRadialDistributionFunction",
-        "ElectronicRadialDistributionFunction",
-        "CoulombMatrix",
-        "SineCoulombMatrix",
-        "OrbitalFieldMatrix",
-        "MinimumRelativeDistances",
-        "SiteStatsFingerprint",
-        "EwaldEnergy",
-        "BondFractions",
-        "BagofBonds",
-        "StructuralHeterogeneity",
-        "MaximumPackingEfficiency",
-        "ChemicalOrdering",
-        "StructureComposition",
-        "XRDPowderPattern",
-        "CGCNNFeaturizer",
-        "JarvisCFID",
-        "SOAP",
-        "GlobalInstabilityIndex"
-    ];
-    let compositionFeaturizers = [
-        "OxidationStates",
-        "AtomicOrbitals",
-        "BandCenter",
-        "ElectronegativityDiff",
-        "ElectronAffinity",
-        "Stoichiometry",
-        "ValenceOrbital",
-        "IonProperty",
-        "ElementFraction",
-        "TMetalFraction",
-        "CohesiveEnergy",
-        "Miedema",
-        "YangSolidSolution",
-        "AtomicPackingEfficiency"
-    ];
-
         $(document).ready(function(){
             let jobId = $("#jobId").val();
             if (jobId != ""){
@@ -267,26 +186,9 @@
 
         // Create featurizers choice both for composition and structure
         function createFeaturizersList() {
-            let strFeaturizers = "";
-            for (let i = 0; i < structureFeaturizers.length; i++){
-                strFeaturizers += '<div class="form-group">' +
-                    '<label class="checkbox-inline">' +
-                    '<input type="checkbox" name="' + structureFeaturizers[i] + '">' +
-                    structureFeaturizers[i] +
-                    '</label>' +
-                    '</div>'
-            }
-            $("#structureFeaturizers").html(strFeaturizers);
-            let comFeaturizers = "";
-            for (let i = 0; i < compositionFeaturizers.length; i++){
-                comFeaturizers += '<div class="form-group">' +
-                    '<label class="checkbox-inline">' +
-                    '<input type="checkbox" name="' + compositionFeaturizers[i] + '">' +
-                    compositionFeaturizers[i] +
-                    '</label>' +
-                    '</div>'
-            }
-            $("#compositionFeaturizers").html(comFeaturizers)
+            let selector = $("select[name='featurizer']");
+            $(selector[0]).html(structureFeaturizersSelector());
+            $(selector[1]).html(compositionFeaturizersSelector())
         }
 
         // Create structure choice while refresh table
