@@ -110,13 +110,13 @@
                 <br>
                 <form class="form-horizontal" action="/upload/" method="get">
                     <div class="form-group">
-                        <input type="hidden" name="rename">
+                        <input type="hidden" name="featurizer" value="rename">
                         <label class="col-lg-3 control-label">Rename volume:</label>
                         <div class="col-lg-3">
-                            <select id="renameColumn" class="form-control" onchange="changeName(this)"></select>
+                            <select name="targetColumn" class="form-control"></select>
                         </div>
                         <div class="col-lg-4">
-                            <input class="form-control" name="newName" onchange="changeName(this)">
+                            <input class="form-control" name="value">
                         </div>
                         <div class="col-lg-1">
                             <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
@@ -128,9 +128,9 @@
                 <form class="form-horizontal" action="/upload/" method="get">
                     <div class="form-group">
                         <label class="col-lg-6 control-label">Convert string to structure:</label>
-                        <input type="hidden" name="strToStructure">
+                        <input type="hidden" name="featurizer" value="strToStructure">
                         <div class="col-lg-4">
-                            <select id="strToStructure" class="form-control" onchange="changeName(this)"></select>
+                            <select name="targetColumn" class="form-control"></select>
                         </div>
                         <div class="col-lg-2">
                             <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
@@ -142,9 +142,9 @@
                 <form class="form-horizontal" action="/upload/" method="get">
                     <div class="form-group">
                         <label class="col-lg-6 control-label">Convert structure to composition:</label>
-                        <input type="hidden" name="structureToComposition">
+                        <input type="hidden" name="featurizer" value="structureToComposition">
                         <div class="col-lg-4">
-                            <select id="structureToComposition" class="form-control" onchange="changeName(this)"></select>
+                            <select name="targetColumn" class="form-control"></select>
                         </div>
                         <div class="col-lg-2">
                             <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
@@ -173,7 +173,9 @@
             else {
                 $("#upload").removeAttr("style");
             }
-            createFeaturizersList();
+            let selector = $("select[name='featurizer']");
+            $(selector[0]).html(structureFeaturizersSelector());
+            $(selector[1]).html(compositionFeaturizersSelector());
             createChoice();
         });
 
@@ -182,13 +184,6 @@
             $("table").addClass("table table-striped table-bordered text-nowrap");
             createCalcList();
             createChoice();
-        }
-
-        // Create featurizers choice both for composition and structure
-        function createFeaturizersList() {
-            let selector = $("select[name='featurizer']");
-            $(selector[0]).html(structureFeaturizersSelector());
-            $(selector[1]).html(compositionFeaturizersSelector())
         }
 
         // Create structure choice while refresh table
@@ -201,23 +196,25 @@
                 if (html != ""){
                     str += '<option value="' + html + '">' + html + '</option>'
                 }
-                $("#structureColumn").html(str);
-                $("#compositionColumn").html(str);
-                $("#renameColumn").html(str);
-                $("#strToStructure").html(str);
-                $("#structureToComposition").html(str);
+                let selector = $("select[name='targetColumn']");
+                for (let i = 0; i < selector.length; i++){
+                    $(selector[i]).html(str)
+                }
             }
         }
 
         // Calculate new chemical features
         function featurize(option) {
-            let progress = $(option).siblings(".progress");
+            let progress = $(".progress");
             progress.removeAttr("style");
             let opt = $(option).parent().serializeArray();
+            if (opt["targetColumn"] == '0'){
+                return 0
+            }
             let optList = "?";
             for (let i = 0; i < opt.length; i++){
                 optList += opt[i]["name"];
-                optList += "=on&"
+                optList += "=" + opt[i]["value"] + "&"
             }
             optList = optList.slice(0, optList.length - 1);
             $.ajax({
@@ -239,11 +236,6 @@
                     console.log(msg)
                 }
             });
-        }
-
-        // Change the name of dom
-        function changeName(ele) {
-            ele.name = $(ele).val();
         }
 
         // Create calculate choice list

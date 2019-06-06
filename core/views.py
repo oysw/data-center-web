@@ -96,8 +96,13 @@ def upload(request):
             return render(request, 'upload.html', {'error': 'Please choose a file!'})
         status, df = preprocess([], file)
     else:
-        option = request.GET
-        option = list(option)
+        featurizer = request.GET["featurizer"]
+        target = request.GET["targetColumn"]
+        try:
+            value = request.GET["value"]
+        except KeyError:
+            value = ""
+        option = [featurizer, target, value]
         job_id = request.session["job_id"]
         status, df = preprocess(option, Job.objects.get(id=job_id).data)
     if status:
