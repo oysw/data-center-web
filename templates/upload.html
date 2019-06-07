@@ -119,7 +119,7 @@
                             <input class="form-control" name="value">
                         </div>
                         <div class="col-lg-1">
-                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
                                 <span class="glyphicon glyphicon-play"></span>
                             </button>
                         </div>
@@ -133,7 +133,7 @@
                             <select name="targetColumn" class="form-control"></select>
                         </div>
                         <div class="col-lg-2">
-                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
                                 <span class="glyphicon glyphicon-play"></span>
                             </button>
                         </div>
@@ -147,7 +147,7 @@
                             <select name="targetColumn" class="form-control"></select>
                         </div>
                         <div class="col-lg-2">
-                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode)">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
                                 <span class="glyphicon glyphicon-play"></span>
                             </button>
                         </div>
@@ -207,7 +207,7 @@
         function featurize(option) {
             let progress = $(".progress");
             progress.removeAttr("style");
-            let opt = $(option).parent().serializeArray();
+            let opt = $(option).serializeArray();
             if (opt["targetColumn"] == '0'){
                 return 0
             }
