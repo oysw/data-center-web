@@ -68,7 +68,7 @@
                         <label class="col-lg-1 control-label"></label>
                         <div class="col-lg-4">
                             <button class="btn btn-default" type="button" onclick="showImage(this.parentNode.parentNode.parentNode, 'raw')">Plot</button>
-                            <button class="btn btn-danger" type="reset" value="reset" onclick="clean()">Reset</button>
+                            <button class="btn btn-danger" type="reset" value="reset">Reset</button>
                         </div>
                     </div>
                 </form>
@@ -308,7 +308,6 @@
     // Get the shape of upload file
     function uploadNewFile(ele){
         let progress = $(ele).parent().siblings().find(".progress");
-        console.log(progress[0]);
         progress.removeAttr("style");
         let file = ele.files[0];
         let formData = new FormData();
@@ -447,8 +446,8 @@
             feature_2.push(plotColumn)
         }
         else {
-            feature_1.splice(index);
-            feature_2.splice(index)
+            feature_1.splice(index, 1);
+            feature_2.splice(index, 1)
         }
         refreshPlotFeature()
     }
@@ -462,6 +461,13 @@
         }
         $("#upload").find("select[name='feature_1']").html(html_str);
         $("#upload").find("select[name='feature_2']").html(html_str);
+    }
+
+    // Clean the features array
+    function clean() {
+        feature_1 = [];
+        feature_2 = [];
+        refreshPlotFeature();
     }
     </script>
 {% endblock %}
