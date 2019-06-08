@@ -20,6 +20,7 @@ from core.tools import draw_pic
 from core.pre_process import preprocess
 from dsweb.settings import MEDIA_ROOT
 # Create your views here.
+from core.tools import calculate
 
 
 def index(request):
@@ -197,6 +198,7 @@ def result(request):
     :param request:
     :return:
     """
+    calculate()
     if 'username' in request.session.keys():
         return render(request, 'result.html', {'result': get_result(request.session['username'])})
     else:
