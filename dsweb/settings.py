@@ -105,6 +105,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Security
+LOGIN_URL = '/login/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Session
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/

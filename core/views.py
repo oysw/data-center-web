@@ -5,14 +5,14 @@ import pandas as pd
 import joblib
 import os
 from io import BytesIO
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib import auth
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.http import StreamingHttpResponse
 from django.utils.safestring import mark_safe
 from django.core.files import File
+from django.contrib.auth.decorators import login_required
 
 from django.utils.crypto import get_random_string
 from core.models import Job
@@ -46,7 +46,7 @@ def login(request):
             User.objects.get(username=username)
         except User.DoesNotExist:
             return render(request, 'login.html', {'error': 'No such user!'})
-        user = authenticate(username=username, password=password)
+        user = auth.authenticate(username=username, password=password)
         if user:
             auth.login(request, user)
             request.session['username'] = username
@@ -84,6 +84,7 @@ def register(request):
         return render(request, 'register.html')
 
 
+@login_required
 def upload(request):
     """
     Get the uploaded file and switch to preprocess page
@@ -145,6 +146,7 @@ def upload(request):
             return JsonResponse({'error': df})
 
 
+@login_required
 def submit(request):
     """
     Submit the job and begin calculating
@@ -176,21 +178,18 @@ def submit(request):
     return render(request, "upload.html")
 
 
+@login_required
 def logout(request):
     """
     Delete the username in the session.
     :param request:
     :return:
     """
-    try:
-        del request.session['username']
-        del request.session['job_id']
-        del request.session["job_file_path"]
-    except KeyError:
-        pass
-    return render(request, 'index.html')
+    auth.logout(request)
+    return redirect('/')
 
 
+@login_required
 def result(request):
     """
     Switch to result page.
@@ -203,6 +202,7 @@ def result(request):
         return render(request, "index.html")
 
 
+@login_required
 def draw(request):
     """
     Graph making entrance point.
@@ -218,6 +218,7 @@ def draw(request):
         return render(request, "draw.html", {"jobId": job_id})
 
 
+@login_required
 def data_detail(request):
     """
     Analyze uploaded new dataset and return the shape of new dataset.
@@ -274,6 +275,7 @@ def get_result(username):
     return jobs
 
 
+@login_required
 def download_predict(request):
     """
     Provide predict file.
