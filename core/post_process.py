@@ -3,23 +3,20 @@ This file is used to process the data after training.
 """
 import os
 import numpy as np
-from django.utils.crypto import get_random_string
 from dsweb.settings import MEDIA_ROOT
 
 
-def predict_file_create(y_predict):
+def predict_file_create(y_predict, username):
     """
-    Generate csv file containing predict data.
+    Generate pure text file containing predict data.
+    The file is saved in /tmp/ai4chem/predict/
     :param y_predict:
     :return: The name of predicted values' file
     """
-    predict_dir = MEDIA_ROOT + 'predict'
+    predict_dir = MEDIA_ROOT + 'predict/'
     try:
         os.makedirs(predict_dir)
     except FileExistsError:
         pass
-    random_string = get_random_string(7)
-    predict_file = predict_dir + '/predict_' + random_string + '.txt'
-
+    predict_file = predict_dir + username + '.txt'
     np.savetxt(predict_file, y_predict, fmt="%f", delimiter=',')
-    return 'predict_' + random_string + '.txt'

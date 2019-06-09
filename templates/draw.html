@@ -284,7 +284,7 @@
             $(this).tab('show')
         });
         $.ajax({
-            url: "/detail?model_id=" + jobId,
+            url: "/detail/columns?model_id=" + jobId,
             type: "GET",
             success: function (retVal) {
                 let label = retVal["label"];
@@ -314,7 +314,7 @@
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         formData.append('uploadFile', file);
         $.ajax({
-            url: "/detail/",
+            url: "/detail/preprocess/",
             type: "POST",
             data: formData,
             contentType: false,
@@ -346,7 +346,7 @@
         }
         optList = optList.slice(0, optList.length - 1);
         $.ajax({
-                url: "/detail" + optList,
+                url: "/detail/preprocess/" + optList,
                 type: "GET",
                 success: function (retVal) {
                     if (typeof (retVal["error"]) != "undefined" ) {
@@ -419,8 +419,7 @@
                     fig.open();
                     fig.write(retVal["image"]);
                     fig.close();
-                    let fileName = retVal["file"].split(".")[0];
-                    let href = "/download?file=" + fileName;
+                    let href = "/download/";
                     let downloadBtn = $("#downloadPredict");
                     downloadBtn.attr("href", href);
                     downloadBtn.removeAttr("style");

@@ -1,6 +1,7 @@
 """
 Tool used to maintain the program.
 """
+import re
 import os
 import psutil
 import pandas as pd
@@ -16,9 +17,28 @@ from dsweb.settings import MEDIA_ROOT
 from . import post_process
 
 
+def username_check(username):
+    """
+    Valid username contains only letters, numbers and underlines.
+    And only start with letters.
+    :param username:
+    :return: True or false
+    """
+    num_letter = re.compile(r"^(?!\d+$)[\da-zA-Z_]+$")
+    first_letter = re.compile(r"^[a-zA-Z]")
+    if first_letter.search(username):
+        if num_letter.search(username):
+            return True
+    return False
+
+
 def draw_pic(request):
     """
-    load data and assign plotting task
+    Load data(either provide by training data or uploaded new data.)
+    Default:
+        The last column of training dataframe will be regarded as target.(y)
+        The rest of columns will be regarded as features.(X)
+    Option contains the required choices for plotting.(e.g. Title, Color, Axis)
     :param request:
     :return:
     """
@@ -30,18 +50,24 @@ def draw_pic(request):
     y = data[data.columns[-1]]
     mod = joblib.load(job.mod.file)
 
+    # Plot with raw data(Training data)
     if option["chooseData"] == 'raw':
         x_test = x
         y_pred = mod.predict(x_test)
 
+    # Plot with uploaded new data.
     elif option["chooseData"] == 'upload':
         file = MEDIA_ROOT + request.session["username"]
         try:
             x_test = pd.read_pickle(file, compression=None)
         except Exception as _e:
             print(_e)
-            return "", "Uploaded file is invalid.", ""
+            return "", "Uploaded file is invalid."
         try:
+            """
+            Not all the columns could be used for prediction. Only pure numbers is acceptable.
+            Even though there are restrictions on front-end page, possible flaws may occur.
+            """
             plot_columns = []
             for key in option:
                 if option[key] == "on":
@@ -49,13 +75,14 @@ def draw_pic(request):
             x_test = x_test[plot_columns]
             y_pred = mod.predict(x_test)
         except ValueError as _e:
-            return "", "Uploaded file is unacceptable or mismatches the shape of raw data.", ""
+            return "", "Uploaded file is unacceptable or mismatches the shape of raw data."
     else:
-        return "", "Please choose a data type", ""
+        return "", "Please choose a data type"
 
-    file_name = post_process.predict_file_create(y_pred)
+    post_process.predict_file_create(y_pred, request.session["username"])
 
     try:
+        # Select columns need to be plotted.
         f1 = option["feature_1"]
         f2 = option["feature_2"]
     except Exception as e:
@@ -63,11 +90,11 @@ def draw_pic(request):
         f1 = f2 = "0"
         pass
     if f1 != '0' and f2 != '0':
-        return draw_pic_3d(option, x, y, x_test, y_pred), "", file_name
+        return draw_pic_3d(option, x, y, x_test, y_pred), ""
     elif f1 != '0' or f2 != '0':
-        return draw_pic_2d(option, x, y, x_test, y_pred), "", file_name
+        return draw_pic_2d(option, x, y, x_test, y_pred), ""
     else:
-        return "", "Please choose feature!", ""
+        return "", "Please choose feature!"
 
 
 def draw_pic_2d(option, x, y, x_test, y_pred):
@@ -190,6 +217,17 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
 
 
 def calculate():
+    """
+    This function is scheduled to work every minutes. Powered by crontab in Linux system.
+    It doesn't work in Windows system.
+    Analyze the data and save the machine learning models provided by sklearn.
+    Currently involved models:
+        Regression：
+            Linear, Nearest Neighbour, Random Forests, Support Vectors Machine, Multiple Layers Perception.
+        Classification:
+            None
+    :return:
+    """
     if not is_last_job_finished():
         return
     save_current_job_id(os.getpid())
@@ -225,6 +263,11 @@ def calculate():
 
 
 def is_last_job_finished():
+    """
+    The current process's ID is stored in /tmp/ai4chem/script/. New job would not start until
+    current job finished.
+    :return:
+    """
     if not os.path.exists('/tmp/ai4chem/script/ds_current_job.txt'):
         return True
     with open('/tmp/ai4chem/script/ds_current_job.txt', 'r') as f:
@@ -236,6 +279,10 @@ def is_last_job_finished():
 
 
 def save_current_job_id(pid):
+    """
+    :param pid:
+    :return:
+    """
     if not os.path.exists('/tmp/ai4chem/script/'):
         os.makedirs('/tmp/ai4chem/script/')
     with open('/tmp/ai4chem/script/ds_current_job.txt', 'w') as f:
@@ -244,6 +291,13 @@ def save_current_job_id(pid):
 
 
 def job_error(job, e):
+    """
+    Used for error processing.
+    Switch the status of job to Error!
+    :param job:
+    :param e:
+    :return:
+    """
     job.status = 'E'
     print(e)
     job.save()

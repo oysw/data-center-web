@@ -15,6 +15,7 @@ def preprocess(option, file):
     :return: Dataframe
     """
     try:
+        # The file may be json, csv and pickle format.
         file.seek(0)
         df = pd.read_pickle(file, compression=None)
     except Exception as e:
@@ -30,24 +31,33 @@ def preprocess(option, file):
                 print(e)
                 return False, "File type is not supported"
     finally:
+        # Fail to close the file may cause severe problem.
         file.close()
+    """
+    The format of option is [featurizer, target column, value].
+    'featurizer' is the wanted way to process data.
+    If empty list [] is provided, this function will only try to remove NaN columns and rows.
+    """
     if not option:
         df = df.dropna(axis=0, how="all").dropna(axis=1)
     else:
         featurizer = option[0]
         target = option[1]
         value = option[2]
+        # Rename one column of dataframe.
         if featurizer == "rename":
             columns = list(df.columns)
             col_index = columns.index(target)
             columns.remove(target)
             columns.insert(col_index, value)
             df.columns = columns
+        # Convert json format string to structure(Pymatgen class)
         elif featurizer == "strToStructure":
             try:
                 df[target] = [Structure.from_str(i, 'json') for i in df[target]]
             except Exception as e:
                 return False, repr(e)
+        # Convert structure(Pymatgen class) to composition(Pymatgen class)
         elif featurizer == "structureToComposition":
             try:
                 df = StructureToComposition().featurize_dataframe(df, target)
@@ -55,9 +65,11 @@ def preprocess(option, file):
                 return False, repr(e)
         else:
             try:
+                # Provided by matminer to process structure(Pymatgen class).
                 convert = structure.__dict__[featurizer]()
             except KeyError:
                 try:
+                    # Provide by matminer to process composition(Pymatgen class).
                     convert = composition.__dict__[featurizer]()
                 except KeyError:
                     df = space_check(df)
@@ -72,8 +84,8 @@ def preprocess(option, file):
 
 def space_check(dataframe):
     """
-    Since it's hard for form submission if there are spaces. We need to convert
-    space to _.
+    Since it's hard for form submission if there are spaces, and there may be unpredictable error on the
+    front-end page, we need to convert space to _.
     :param dataframe:
     :return:
     """
