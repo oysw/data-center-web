@@ -4,7 +4,7 @@ This file is used to process csv file
 import pandas as pd
 from matminer.featurizers import structure
 from matminer.featurizers import composition
-from matminer.featurizers.conversions import StructureToComposition
+from matminer.featurizers.conversions import StructureToComposition, StrToComposition
 from pymatgen.core.structure import Structure
 
 
@@ -61,6 +61,12 @@ def preprocess(option, file):
         elif featurizer == "structureToComposition":
             try:
                 df = StructureToComposition().featurize_dataframe(df, target)
+            except Exception as e:
+                return False, repr(e)
+        # Convert string to composition(Pymatgen class)
+        elif featurizer == "strToComposition":
+            try:
+                df = StrToComposition().featurize_dataframe(df, target)
             except Exception as e:
                 return False, repr(e)
         else:

@@ -141,6 +141,20 @@
                 </form>
                 <form class="form-horizontal" action="/upload/" method="get">
                     <div class="form-group">
+                        <label class="col-lg-6 control-label">Convert string to composition:</label>
+                        <input type="hidden" name="featurizer" value="strToComposition">
+                        <div class="col-lg-4">
+                            <select name="targetColumn" class="form-control"></select>
+                        </div>
+                        <div class="col-lg-2">
+                            <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <form class="form-horizontal" action="/upload/" method="get">
+                    <div class="form-group">
                         <label class="col-lg-6 control-label">Convert structure to composition:</label>
                         <input type="hidden" name="featurizer" value="structureToComposition">
                         <div class="col-lg-4">
