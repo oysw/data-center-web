@@ -16,14 +16,24 @@
                 <form action="/submit/" method="post">
                     {% csrf_token %}
                     <div class="modal-body">
-                        <div id="calcList">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div id="calcList">
+                                </div>
+                                <button type="button" class="btn btn-default" onclick="selectAll(this)">
+                                    <span class="glyphicon glyphicon-plus"></span>
+                                </button>
+                                <button type="reset" class="btn btn-danger">
+                                    <span class="glyphicon glyphicon-refresh"></span>
+                                </button>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="form-group">
+                                    <label class="control-label">Select target column: </label>
+                                    <select name="columnAsTarget" class="form-control"></select>
+                                </div>
+                            </div>
                         </div>
-                        <button type="button" class="btn btn-default" onclick="selectAll(this)">
-                            <span class="glyphicon glyphicon-plus"></span>
-                        </button>
-                        <button type="reset" class="btn btn-danger">
-                            <span class="glyphicon glyphicon-refresh"></span>
-                        </button>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary">
@@ -290,7 +300,18 @@
                 str += '<div class="checkbox"><label><input name=' + column + ' type="checkbox">';
                 str += column + '</label></div>'
             } 
-            $("#calcList").html(str)
+            $("#calcList").html(str);
+            // Create choice for target column while submission
+            str = '';
+            for (let i = 0; i < calcList.length; i++){
+                if (calcList.length == 0){
+                    break
+                }
+                let column = calcList[i];
+                str += '<option value=' + column + '>';
+                str += column + '</option>'
+            }
+            $(".modal-body").find("select[name='columnAsTarget']").html(str)
         }
         
         // Select all checkbox

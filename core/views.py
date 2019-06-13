@@ -160,11 +160,17 @@ def submit(request):
     :param request:
     :return:
     """
-    columns = list(request.POST)[1:]
+    # Remove csrf item.
+    target = request.POST['columnAsTarget']
+    columns = list(request.POST)[1:-1]
     job_id = request.session["job_id"]
     file_path = request.session["job_file_path"]
     job = Job.objects.get(id=job_id)
     df = pd.read_pickle(job.data, compression=None)
+    if target not in columns:
+        columns.append(target)
+    else:
+        columns.extend(columns.pop(columns.index(target)))
     df = df[columns]
     job.data.close()
     try:
