@@ -170,7 +170,7 @@ def submit(request):
     if target not in columns:
         columns.append(target)
     else:
-        columns.extend(columns.pop(columns.index(target)))
+        columns.append(columns.pop(columns.index(target)))
     df = df[columns]
     job.data.close()
     try:
