@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block title %}数据中心{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div id="preprocess" class="container">
+        <div class="row">
+            <label style="font-size: xx-large">Conversion</label>
+            <form class="form-horizontal">
+                <input type="hidden" name="job_id" value="{{ job_id }}">
+                <input type="hidden" name="choose_data" value="{{ choose_data }}">
+                <div class="form-group">
+                    <label class="col-lg-2 control-label">Featurize structure</label>
+                    <div class="col-lg-3">
+                        <select name="target_column" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-3">
+                        <select name="featurizer" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-1">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal">
+                <input type="hidden" name="job_id" value="{{ job_id }}">
+                <input type="hidden" name="choose_data" value="{{ choose_data }}">
+                <div class="form-group">
+                    <label class="col-lg-2 control-label">Featurize composition</label>
+                    <div class="col-lg-3">
+                        <select name="target_column" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-3">
+                        <select name="featurizer" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-1">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal" action="/upload/" method="get">
+                <input type="hidden" name="job_id" value="{{ job_id }}">
+                <input type="hidden" name="choose_data" value="{{ choose_data }}">
+                <div class="form-group">
+                    <input type="hidden" name="featurizer" value="rename">
+                    <label class="col-lg-2 control-label">Rename volume:</label>
+                    <div class="col-lg-3">
+                        <select name="target_column" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-4">
+                        <input class="form-control" name="value">
+                    </div>
+                    <div class="col-lg-1">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal" action="/upload/" method="get">
+                <input type="hidden" name="job_id" value="{{ job_id }}">
+                <input type="hidden" name="choose_data" value="{{ choose_data }}">
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Convert string to structure:</label>
+                    <input type="hidden" name="featurizer" value="strToStructure">
+                    <div class="col-lg-4">
+                        <select name="target_column" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal" action="/upload/" method="get">
+                <input type="hidden" name="job_id" value="{{ job_id }}">
+                <input type="hidden" name="choose_data" value="{{ choose_data }}">
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Convert string to composition:</label>
+                    <input type="hidden" name="featurizer" value="strToComposition">
+                    <div class="col-lg-4">
+                        <select name="target_column" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal" action="/upload/" method="get">
+                <input type="hidden" name="job_id" value="{{ job_id }}">
+                <input type="hidden" name="choose_data" value="{{ choose_data }}">
+                <div class="form-group">
+                    <label class="col-lg-3 control-label">Convert structure to composition:</label>
+                    <input type="hidden" name="featurizer" value="structureToComposition">
+                    <div class="col-lg-4">
+                        <select name="target_column" class="form-control"></select>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                            <span class="glyphicon glyphicon-play"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="row">
+            <label style="font-size: xx-large">Preview</label>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                    Processing
+                </div>
+            </div>
+            <div id="table" class="table-responsive" style="height: 500px">
+                {{ html }}
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+    <script src="{% static 'js/preprocess.js' %}"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            let selector = $("select[name='featurizer']");
+            $(selector[0]).html(structureFeaturizersSelector());
+            $(selector[1]).html(compositionFeaturizersSelector());
+            decorate_table();
+        });
+
+        // Add style when loading new table
+        function decorate_table() {
+            $("table").addClass("table table-striped table-bordered text-nowrap");
+            create_target_columns_list();
+        }
+
+        // Create structure choice while refresh table
+        function create_target_columns_list() {
+            let table_head = $("thead");
+            let columns = table_head.find("th");
+            let str = '<option>None</option>';
+            for (let i = 0; i < columns.length; i++){
+                let html = $(columns[i]).html();
+                if (html != ""){
+                    str += '<option value="' + html + '">' + html + '</option>'
+                }
+                let selector = $("select[name='target_column']");
+                for (let i = 0; i < selector.length; i++){
+                    $(selector[i]).html(str)
+                }
+            }
+        }
+
+        // Calculate new chemical features
+        function featurize(option) {
+            let opt = $(option).serializeArray();
+            let optList = "?";
+            for (let i = 0; i < opt.length; i++){
+                if (opt[i]['name'] === 'target_column') {
+                    if (opt[i]['value'] === 'None'){
+                        return 0
+                    }
+                }
+                if (opt[i]['name'] === 'featurizer') {
+                    if (opt[i]['value'] === 'None'){
+                        return 0
+                    }
+                }
+                optList += opt[i]["name"];
+                optList += "=" + opt[i]["value"] + "&"
+            }
+            optList = optList.slice(0, optList.length - 1);
+            $.ajax({
+                url: "/job/process" + optList,
+                type: "GET",
+                success: function (value) {
+                    if (typeof (value["error"]) != "undefined" ) {
+                        console.log(value["error"])
+                    }
+                    else {
+                        let html = value['html'];
+                        $("#table").html(html);
+                        decorate_table();
+                    }
+                },
+                error:function (msg) {
+                    console.log(msg)
+                }
+            });
+        }
+    </script>
+{% endblock %}

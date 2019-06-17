@@ -36,7 +36,7 @@ def login(request):
     :return:
     """
     if 'username' in request.session.keys():
-        return render(request, 'upload.html')
+        return home(request)
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -48,7 +48,7 @@ def login(request):
         if user:
             auth.login(request, user)
             request.session['username'] = username
-            return render(request, 'upload.html')
+            return home(request)
         else:
             return render(request, 'login.html', {'error': 'Incorrect password'})
     else:
@@ -86,112 +86,6 @@ def register(request):
 
 
 @login_required
-def upload(request):
-    """
-    Get and save the uploaded file and process the file with function provide by pymatgen and matminer.
-    The information of uploaded file will be stored in database.
-    :param request:
-    :return:
-    """
-    if request.method == "POST":
-        file = request.FILES.get('file')
-        if file is None:
-            return render(request, 'upload.html', {'error': 'Please choose a file!'})
-        status, df = preprocess([], file)
-    else:
-        featurizer = request.GET["featurizer"]
-        target = request.GET["targetColumn"]
-        try:
-            value = request.GET["value"]
-        except KeyError:
-            value = ""
-        option = [featurizer, target, value]
-        job_id = request.session["job_id"]
-        status, df = preprocess(option, Job.objects.get(id=job_id).data)
-    """
-    If the process of data succeeds without error reports, save new data in database.
-    """
-    if status:
-        f = File(BytesIO())
-        df.to_pickle(f, compression=None)
-        try:
-            # Data which has been uploaded and experience several processes will come to this way.
-            job_id = request.session["job_id"]
-            file_path = request.session["job_file_path"]
-            try:
-                os.remove(MEDIA_ROOT + file_path)
-            except FileNotFoundError:
-                pass
-            job = Job.objects.get(id=job_id)
-            f.name = file_path.split("/")[-1]
-            job.data = f
-            job.save()
-            job.data.close()
-        except KeyError:
-            # Data that is first uploaded will come to this way.(Raw uploaded data.)
-            f.name = get_random_string(7) + '.pkl'
-            job = Job.objects.create(
-                owner=request.session['username'],
-                data=f
-            )
-            job_id = job.id
-            request.session["job_id"] = job_id
-            request.session["job_file_path"] = job.data.name
-            job.data.close()
-        return_dict = {
-            'html': mark_safe(df.to_html()),
-            'job_id': job_id
-        }
-        if request.method == "POST":
-            return render(request, 'upload.html', return_dict)
-        else:
-            return JsonResponse(return_dict)
-    else:
-        if request.method == "POST":
-            return render(request, 'upload.html', {'error': df})
-        else:
-            return JsonResponse({'error': df})
-
-
-@login_required
-def submit(request):
-    """
-    Submit the job and begin calculating
-    :param request:
-    :return:
-    """
-    # Remove csrf item.
-    target = request.POST['columnAsTarget']
-    columns = list(request.POST)[1:-1]
-    job_id = request.session["job_id"]
-    file_path = request.session["job_file_path"]
-    job = Job.objects.get(id=job_id)
-    df = pd.read_pickle(job.data, compression=None)
-    if target not in columns:
-        columns.append(target)
-    else:
-        columns.append(columns.pop(columns.index(target)))
-    df = df[columns]
-    job.data.close()
-    try:
-        os.remove(MEDIA_ROOT + file_path)
-    except FileNotFoundError:
-        pass
-    f = File(BytesIO())
-    df.to_pickle(f, compression=None)
-    f.name = file_path.split("/")[-1]
-    job.data = f
-    job.status = "W"
-    job.save()
-    try:
-        del request.session["job_id"]
-        del request.session["job_file_path"]
-    except KeyError:
-        pass
-    return render(request, "upload.html")
-
-
-@login_required
 def logout(request):
     """
     :param request:
@@ -202,114 +96,232 @@ def logout(request):
 
 
 @login_required
-def result(request):
+def home(request):
     """
-    Jump to result page.
+    Jump to home page.
     :param request:
     :return:
     """
-    if 'username' in request.session.keys():
-        return render(request, 'result.html', {'result': get_result(request.session['username'])})
+    username = request.session['username']
+    jobs = Job.objects.filter(owner=username)
+    for job in jobs:
+        try:
+            best = joblib.load(job.mod)
+            job.mod = best.__class__.__name__
+        except ValueError:
+            pass
+    return_dict = {'username': username, 'jobs': jobs}
+    return render(request, 'home.html', return_dict)
+
+
+@login_required
+def add_new_job(request):
+    """
+    :param request:
+    :return:
+    """
+    username = request.session['username']
+    label = request.POST['label']
+    Job.objects.create(owner=username, label=label)
+    return home(request)
+
+
+@login_required
+def delete_job(request):
+    """
+    :param request:
+    :return:
+    """
+    job_id = request.GET['job_id']
+    try:
+        Job.objects.get(id=job_id).delete()
+    except Job.DoesNotExist:
+        pass
+    return home(request)
+
+
+@login_required
+def upload_page(request):
+    file_info = {
+        'job_id': request.GET['job_id'],
+        'choose_data': request.GET['choose_data']
+    }
+    return render(request, 'upload.html', file_info)
+
+
+@login_required
+def upload(request):
+    file = request.FILES.get('file')
+    try:
+        job_id = int(request.POST['job_id'])
+        choose_data = request.POST['choose_data']
+    except Exception as e:
+        print(e)
+        return home(request)
+    return_dict = {
+        'job_id': job_id,
+        'choose_data': choose_data,
+    }
+    if file is None:
+        return_dict['error'] = 'Please choose a file!'
+        return render(request, 'upload.html', return_dict)
+    job = Job.objects.get(id=job_id)
+    status, df = preprocess([], file)
+    if status:
+        file = File(BytesIO())
+        df.to_pickle(file, compression=None)
+        file.name = get_random_string(7) + '.pkl'
     else:
-        return render(request, "index.html")
+        return_dict['error'] = df
+        return render(request, 'upload.html', return_dict)
+    if choose_data == 'raw':
+        job.raw = file
+    elif choose_data == 'upload':
+        job.upload = file
+    else:
+        return_dict['error'] = 'Unexpect error!'
+        return render(request, 'upload.html', return_dict)
+    job.save()
+    return home(request)
+
+
+@login_required
+def process_page(request):
+    job_id = int(request.GET['job_id'])
+    choose_data = request.GET['choose_data']
+    job = Job.objects.get(id=job_id)
+    if choose_data == 'raw':
+        status, df = preprocess([], job.raw)
+    elif choose_data == 'upload':
+        status, df = preprocess([], job.upload)
+    else:
+        return render(request, 'process.html')
+    return_dict = {
+        'job_id': job_id,
+        'choose_data': choose_data,
+        'html': mark_safe(df.to_html())
+    }
+    return render(request, 'process.html', return_dict)
+
+
+@login_required
+def process(request):
+    featurizer = request.GET["featurizer"]
+    target = request.GET["target_column"]
+    try:
+        value = request.GET["value"]
+    except KeyError:
+        value = ""
+    option = [featurizer, target, value]
+    job_id = int(request.GET["job_id"])
+    job = Job.objects.get(id=job_id)
+    if request.GET['choose_data'] == 'raw':
+        file = job.raw
+    elif request.GET['choose_data'] == 'upload':
+        file = job.upload
+    else:
+        return JsonResponse({'error': ""})
+    status, df = preprocess(option, file)
+    """
+    If the process of data succeeds without error reports, save new data in database.
+    """
+    if status:
+        file.open('wb')
+        file.truncate()
+        file.seek(0)
+        df.to_pickle(file, compression=None)
+        job.save()
+        file.close()
+        return_dict = {
+            'html': mark_safe(df.to_html()),
+        }
+        return JsonResponse(return_dict)
+    else:
+        return JsonResponse({'error': df})
+
+
+@login_required
+def submit_page(request):
+    job_id = request.GET['job_id']
+    job_id = int(job_id)
+    job = Job.objects.get(id=job_id)
+    file = job.raw
+    df = pd.read_pickle(file, compression=None)
+    file.close()
+    columns = list(df.columns)
+    return_dict = {
+        'job_id': job_id,
+        'columns': columns
+    }
+    return render(request, 'confirm.html', return_dict)
+
+
+@login_required
+def submit(request):
+    """
+    Submit the job and begin calculating
+    :param request:
+    :return:
+    """
+    job_id = int(request.POST["job_id"])
+    # Remove csrf item.
+    target = request.POST['columnAsTarget']
+    columns = list(request.POST)[2:-1]
+    job = Job.objects.get(id=job_id)
+    file = job.raw
+    df = pd.read_pickle(file, compression=None)
+    file.close()
+    if target not in columns:
+        columns.append(target)
+    else:
+        columns.append(columns.pop(columns.index(target)))
+    df = df[columns]
+    file.open("wb")
+    file.truncate()
+    file.seek(0)
+    df.to_pickle(file, compression=None)
+    file.close()
+    job.status = "W"
+    job.save()
+    return home(request)
+
+
+@login_required
+def draw_page(request):
+    """
+    :param request:
+    :return:
+    """
+    job_id = int(request.GET["job_id"])
+    choose_data = request.GET["choose_data"]
+    job = Job.objects.get(id=job_id)
+    status, raw_df = preprocess([], job.raw)
+    if not status:
+        return render(request, "draw.html", {"error": raw_df})
+    return_dict = {
+        'job_id': job_id,
+        'choose_data': choose_data,
+        'raw_columns': list(raw_df.columns)[:-1]
+    }
+    if choose_data == 'upload':
+        status, upload_df = preprocess([], job.upload)
+        if not status:
+            return render(request, "draw.html", {"error": upload_df})
+        return_dict['upload_columns'] = list(upload_df.columns)
+    return render(request, "draw.html", return_dict)
 
 
 @login_required
 def draw(request):
-    """
-    Return graph html code generated by plotly and predict data.
-    Predict data will be save in directory /tmp/ai4chem/predict/.
-    The file name will be username.txt.
-    :param request:
-    :return:
-    Ajax:
-    image: Scalable graph's HTML code. (If error occurs, this will be empty.)
-    err: Text explaining which error occurs.
-    GET:
-    Jump to graph making page.
-    """
-    if request.is_ajax():
-        if request.method == "POST":
-            pic, err = draw_pic(request)
-            return JsonResponse({"image": pic, "err": err})
+    if request.method == 'POST':
+        option = request.POST
+        html, error = draw_pic(option)
+        if error != "":
+            return JsonResponse({"err": error})
+        else:
+            return JsonResponse({"image": html, "err": ""})
     else:
-        job_id = request.GET["jobId"]
-        return render(request, "draw.html", {"jobId": job_id})
-
-
-@login_required
-def get_data_columns(request):
-    """
-    Return the columns of dataframe(Pandas) for generation of choices of target columns.
-    :param request:
-    :return:
-    """
-    model_id = int(request.GET["model_id"])
-    job = Job.objects.get(id=model_id)
-    df = pd.read_pickle(job.data, compression=None)
-    job.data.close()
-    return JsonResponse({"label": list(df.columns)})
-
-
-@login_required
-def data_preprocess(request):
-    """
-    This function is used to process temporary uploaded file. (i.e. Upload new data for prediction).
-    File will be save with username in MEDIA_ROOT directory. The information of data will not be stored in database.
-    GET:
-    The request must contain these parameter:
-    featurizer: Method provided by matminer or pymatgen to featurize dataframe(Pandas)
-    target_column: Which column need featurizing.
-    value(optional): Extra information needed by featurizer. (e.g. User need to provide new name for rename method)
-    POST:
-    This function also used to receive uploaded data.
-    :param request:
-    :return:
-    label: The column of dataframe(Pandas)
-    html: Table of data(HTML format)
-    err: Possible error while saving the file.
-    """
-    file_name = MEDIA_ROOT + request.session["username"]
-    if request.method == "GET":
-        featurizer = request.GET["featurizer"]
-        target = request.GET["targetColumn"]
-        try:
-            value = request.GET["value"]
-        except KeyError:
-            value = ""
-        option = [featurizer, target, value]
-        file = open(file_name, "rb")
-        status, df = preprocess(option, file)
-    else:
-        file = request.FILES.get("uploadFile")
-        status, df = preprocess([], file)
-    if status:
-        data = df
-        df.to_pickle(file_name, compression=None)
-    else:
-        return JsonResponse({"err": df})
-    return_dict = {
-        "label": list(data.columns),
-        "html": mark_safe(data.to_html())
-    }
-    return JsonResponse(return_dict)
-
-
-def get_result(username):
-    """
-    Create the result list for the result page.
-    :param username:
-    :return: Query list of job's records.
-    """
-    jobs = Job.objects.filter(owner=username, status='F')
-    for job in jobs:
-        try:
-            mod = job.mod.file
-            mod = joblib.load(mod)
-            job.mod = mod.__class__.__name__
-        except FileNotFoundError:
-            job.mod = ''
-    return jobs
+        return home(request)
 
 
 @login_required

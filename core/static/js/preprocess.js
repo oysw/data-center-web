@@ -41,7 +41,7 @@ let compositionFeaturizers = [
 ];
 
 function compositionFeaturizersSelector() {
-    let html_str = "<option value='0'>None</option>";
+    let html_str = "<option>None</option>";
     for (let i = 0; i < compositionFeaturizers.length; i++){
         let featurizers = compositionFeaturizers[i];
         html_str += '<option value=' + featurizers + '>' + featurizers + '</option>';
@@ -50,7 +50,7 @@ function compositionFeaturizersSelector() {
 }
 
 function structureFeaturizersSelector() {
-    let html_str = "<option value='0'>None</option>";
+    let html_str = "<option>None</option>";
     for (let i = 0; i < structureFeaturizers.length; i++){
         let featurizers = structureFeaturizers[i];
         html_str += '<option value=' + featurizers + '>' + featurizers + '</option>';

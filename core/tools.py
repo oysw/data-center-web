@@ -32,32 +32,22 @@ def username_check(username):
     return False
 
 
-def draw_pic(request):
-    """
-    Load data(either provide by training data or uploaded new data.)
-    Default:
-        The last column of training dataframe will be regarded as target.(y)
-        The rest of columns will be regarded as features.(X)
-    Option contains the required choices for plotting.(e.g. Title, Color, Axis)
-    :param request:
-    :return:
-    """
-    option = request.POST
-    model_id = int(option["id"])
-    job = Job.objects.get(id=model_id)
-    data = pd.read_pickle(job.data, compression=None)
+def draw_pic(option):
+    job_id = int(option["job_id"])
+    job = Job.objects.get(id=job_id)
+    data = pd.read_pickle(job.raw, compression=None)
     x = data[data.columns[0: -1]]
     y = data[data.columns[-1]]
-    mod = joblib.load(job.mod.file)
+    mod = joblib.load(job.mod)
 
     # Plot with raw data(Training data)
-    if option["chooseData"] == 'raw':
+    if option["choose_data"] == 'raw':
         x_test = x
         y_pred = mod.predict(x_test)
 
     # Plot with uploaded new data.
-    elif option["chooseData"] == 'upload':
-        file = MEDIA_ROOT + request.session["username"]
+    elif option["choose_data"] == 'upload':
+        file = job.upload
         try:
             x_test = pd.read_pickle(file, compression=None)
         except Exception as _e:
@@ -79,7 +69,7 @@ def draw_pic(request):
     else:
         return "", "Please choose a data type"
 
-    post_process.predict_file_create(y_pred, request.session["username"])
+    post_process.predict_file_create(y_pred, job.owner)
 
     try:
         # Select columns need to be plotted.
@@ -89,9 +79,9 @@ def draw_pic(request):
         print(e)
         f1 = f2 = "0"
         pass
-    if f1 != '0' and f2 != '0':
+    if f1 != 'None' and f2 != 'None':
         return draw_pic_3d(option, x, y, x_test, y_pred), ""
-    elif f1 != '0' or f2 != '0':
+    elif f1 != 'None' or f2 != 'None':
         return draw_pic_2d(option, x, y, x_test, y_pred), ""
     else:
         return "", "Please choose feature!"
@@ -107,13 +97,12 @@ def draw_pic_2d(option, x, y, x_test, y_pred):
     :param y_pred: y_axis value(calculated)
     :return:
     """
-    if option["feature_1"] != '0':
-        plot_feature = option["feature_1"]
+    if option["feature_1"] != 'None':
+        plot_feature = int(option["feature_1"])
     else:
-        plot_feature = option["feature_2"]
-    index = list(x_test.columns).index(plot_feature)
-    x_test = x_test[plot_feature]
-    x = x[list(x.columns)[index]]
+        plot_feature = int(option["feature_2"])
+    x_test = x_test[x_test.columns[plot_feature]]
+    x = x[x.columns[plot_feature]]
 
     trace_raw = go.Scatter(
         x=x,
@@ -157,14 +146,12 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
     :param y_pred:
     :return:
     """
-    plot_feature_1 = option["feature_1"]
-    plot_feature_2 = option["feature_2"]
-    index_1 = list(x_test.columns).index(plot_feature_1)
-    index_2 = list(x_test.columns).index(plot_feature_2)
-    x_test_1 = x_test[plot_feature_1]
-    x_test_2 = x_test[plot_feature_2]
-    x_1 = x[list(x.columns)[index_1]]
-    x_2 = x[list(x.columns)[index_2]]
+    plot_feature_1 = int(option["feature_1"])
+    plot_feature_2 = int(option["feature_2"])
+    x_test_1 = x_test[x_test.columns[plot_feature_1]]
+    x_test_2 = x_test[x_test.columns[plot_feature_2]]
+    x_1 = x[x.columns[plot_feature_1]]
+    x_2 = x[x.columns[plot_feature_2]]
 
     trace_raw = go.Scatter3d(
         x=x_1,

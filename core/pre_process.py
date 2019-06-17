@@ -28,10 +28,8 @@ def preprocess(option, file):
                 file.seek(0)
                 df = pd.read_csv(file)
             except Exception as e:
-                print(e)
-                return False, "File type is not supported"
+                return False, repr(e)
     finally:
-        # Fail to close the file may cause severe problem.
         file.close()
     """
     The format of option is [featurizer, target column, value].

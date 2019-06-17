@@ -20,15 +20,34 @@ from core import views
 
 urlpatterns = [
     path('', views.index),
-    path('login/', views.login),
-    path('register/', views.register),
-    path('upload/', views.upload),
-    path('submit/', views.submit),
-    path('result/', views.result),
-    path('detail/preprocess/', views.data_preprocess),
-    path('detail/columns/', views.get_data_columns),
-    path('draw/', views.draw),
-    path('download/', views.download_predict),
-    path('logout/', views.logout),
     path('admin/', admin.site.urls),
+    # Login page jumping or login info submission
+    path('login/', views.login),
+    # Register Page jumping or register info submission
+    path('register/', views.register),
+    # Home page jumping
+    path('home/', views.home),
+    # Add new job
+    path('job/add/', views.add_new_job),
+    # Delete new job
+    path('job/delete/', views.delete_job),
+    # Plot graph
+    path('draw/', views.draw),
+    # Draw page jumping
+    path('draw/page/', views.draw_page),
+    # Uploaded file process and save
+    path('upload/', views.upload),
+    # Upload page jumping
+    path('upload/page/', views.upload_page),
+    # Process file and save
+    path('job/process/', views.process),
+    # Process page jumping
+    path('job/process/page/', views.process_page),
+    # Confirm data page
+    path('submit/page/', views.submit_page),
+    path('logout/', views.logout),
+    # Ajax
+    path('submit/', views.submit),
+    path('download/', views.download_predict),
+
 ]
