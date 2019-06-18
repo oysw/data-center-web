@@ -9,7 +9,7 @@
     <div id="preprocess" class="container">
         <div class="row">
             <label style="font-size: xx-large">Conversion</label>
-            <form class="form-horizontal">
+            <form class="form-horizontal" action="/job/process/" method="get">
                 <input type="hidden" name="job_id" value="{{ job_id }}">
                 <input type="hidden" name="choose_data" value="{{ choose_data }}">
                 <div class="form-group">
@@ -21,13 +21,13 @@
                         <select name="featurizer" class="form-control"></select>
                     </div>
                     <div class="col-lg-1">
-                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                        <button class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
                 </div>
             </form>
-            <form class="form-horizontal">
+            <form class="form-horizontal" action="/job/process/" method="get">
                 <input type="hidden" name="job_id" value="{{ job_id }}">
                 <input type="hidden" name="choose_data" value="{{ choose_data }}">
                 <div class="form-group">
@@ -39,13 +39,13 @@
                         <select name="featurizer" class="form-control"></select>
                     </div>
                     <div class="col-lg-1">
-                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                        <button class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
                 </div>
             </form>
-            <form class="form-horizontal" action="/upload/" method="get">
+            <form class="form-horizontal" action="/job/process/" method="get">
                 <input type="hidden" name="job_id" value="{{ job_id }}">
                 <input type="hidden" name="choose_data" value="{{ choose_data }}">
                 <div class="form-group">
@@ -58,13 +58,13 @@
                         <input class="form-control" name="value">
                     </div>
                     <div class="col-lg-1">
-                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                        <button class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
                 </div>
             </form>
-            <form class="form-horizontal" action="/upload/" method="get">
+            <form class="form-horizontal" action="/job/process/" method="get">
                 <input type="hidden" name="job_id" value="{{ job_id }}">
                 <input type="hidden" name="choose_data" value="{{ choose_data }}">
                 <div class="form-group">
@@ -74,13 +74,13 @@
                         <select name="target_column" class="form-control"></select>
                     </div>
                     <div class="col-lg-2">
-                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                        <button class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
                 </div>
             </form>
-            <form class="form-horizontal" action="/upload/" method="get">
+            <form class="form-horizontal" action="/job/process/" method="get">
                 <input type="hidden" name="job_id" value="{{ job_id }}">
                 <input type="hidden" name="choose_data" value="{{ choose_data }}">
                 <div class="form-group">
@@ -90,13 +90,13 @@
                         <select name="target_column" class="form-control"></select>
                     </div>
                     <div class="col-lg-2">
-                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                        <button class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
                 </div>
             </form>
-            <form class="form-horizontal" action="/upload/" method="get">
+            <form class="form-horizontal" action="/job/process/" method="get">
                 <input type="hidden" name="job_id" value="{{ job_id }}">
                 <input type="hidden" name="choose_data" value="{{ choose_data }}">
                 <div class="form-group">
@@ -106,7 +106,7 @@
                         <select name="target_column" class="form-control"></select>
                     </div>
                     <div class="col-lg-2">
-                        <button class="btn btn-success" type="button" onclick="featurize(this.parentNode.parentNode.parentNode)">
+                        <button class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -115,7 +115,7 @@
         </div>
         <div class="row">
             <label style="font-size: xx-large">Preview</label>
-            <div class="progress">
+            <div class="progress" style="display: none">
                 <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
                     Processing
                 </div>
@@ -156,44 +156,6 @@
                     $(selector[i]).html(str)
                 }
             }
-        }
-
-        // Calculate new chemical features
-        function featurize(option) {
-            let opt = $(option).serializeArray();
-            let optList = "?";
-            for (let i = 0; i < opt.length; i++){
-                if (opt[i]['name'] === 'target_column') {
-                    if (opt[i]['value'] === 'None'){
-                        return 0
-                    }
-                }
-                if (opt[i]['name'] === 'featurizer') {
-                    if (opt[i]['value'] === 'None'){
-                        return 0
-                    }
-                }
-                optList += opt[i]["name"];
-                optList += "=" + opt[i]["value"] + "&"
-            }
-            optList = optList.slice(0, optList.length - 1);
-            $.ajax({
-                url: "/job/process" + optList,
-                type: "GET",
-                success: function (value) {
-                    if (typeof (value["error"]) != "undefined" ) {
-                        console.log(value["error"])
-                    }
-                    else {
-                        let html = value['html'];
-                        $("#table").html(html);
-                        decorate_table();
-                    }
-                },
-                error:function (msg) {
-                    console.log(msg)
-                }
-            });
         }
     </script>
 {% endblock %}

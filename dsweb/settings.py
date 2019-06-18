@@ -134,3 +134,15 @@ MEDIA_ROOT = '/tmp/ai4chem/'
 CRONJOBS = [
     ('* * * * *', 'core.tools.calculate', '>> /tmp/ai4chem/job_download_status.log'),
 ]
+
+# Cache system
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': MEDIA_ROOT + 'django_cache',
+        'TIMEOUT': 600,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}

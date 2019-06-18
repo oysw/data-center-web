@@ -3,7 +3,7 @@ Request handler.
 """
 import pandas as pd
 import joblib
-import os
+import threading
 from io import BytesIO
 from django.shortcuts import render, redirect
 from django.contrib import auth
@@ -12,12 +12,13 @@ from django.http import JsonResponse
 from django.http import StreamingHttpResponse
 from django.utils.safestring import mark_safe
 from django.core.files import File
+from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from core.tools import username_check
 from django.utils.crypto import get_random_string
 from core.models import Job
 from core.tools import draw_pic
-from core.pre_process import preprocess
+from core.pre_process import preprocess, backend_process
 from dsweb.settings import MEDIA_ROOT
 # Create your views here.
 
@@ -35,7 +36,7 @@ def login(request):
     :param request:
     :return:
     """
-    if 'username' in request.session.keys():
+    if request.user.username != "":
         return home(request)
     if request.method == 'POST':
         username = request.POST['username']
@@ -47,7 +48,6 @@ def login(request):
         user = auth.authenticate(username=username, password=password)
         if user:
             auth.login(request, user)
-            request.session['username'] = username
             return home(request)
         else:
             return render(request, 'login.html', {'error': 'Incorrect password'})
@@ -75,10 +75,7 @@ def register(request):
             User.objects.get(username=username)
         except User.DoesNotExist:
             User.objects.create_user(username=username, password=password)
-            try:
-                del request.session['username']
-            except KeyError:
-                pass
+            auth.logout(request)
             return render(request, 'login.html')
         return render(request, 'register.html', {'name_error': 'User already exists!'})
     else:
@@ -102,7 +99,7 @@ def home(request):
     :param request:
     :return:
     """
-    username = request.session['username']
+    username = request.user.username
     jobs = Job.objects.filter(owner=username)
     for job in jobs:
         try:
@@ -120,7 +117,7 @@ def add_new_job(request):
     :param request:
     :return:
     """
-    username = request.session['username']
+    username = request.user.username
     label = request.POST['label']
     Job.objects.create(owner=username, label=label)
     return home(request)
@@ -196,10 +193,15 @@ def process_page(request):
         status, df = preprocess([], job.upload)
     else:
         return render(request, 'process.html')
+    cache_graph = cache.get(str(job_id) + "_" + choose_data + "_html_graph")
+    if cache_graph is not None:
+        html = cache_graph
+    else:
+        html = mark_safe(df.to_html())
     return_dict = {
         'job_id': job_id,
         'choose_data': choose_data,
-        'html': mark_safe(df.to_html())
+        'html': html
     }
     return render(request, 'process.html', return_dict)
 
@@ -212,32 +214,17 @@ def process(request):
         value = request.GET["value"]
     except KeyError:
         value = ""
-    option = [featurizer, target, value]
     job_id = int(request.GET["job_id"])
-    job = Job.objects.get(id=job_id)
-    if request.GET['choose_data'] == 'raw':
-        file = job.raw
-    elif request.GET['choose_data'] == 'upload':
-        file = job.upload
-    else:
-        return JsonResponse({'error': ""})
-    status, df = preprocess(option, file)
-    """
-    If the process of data succeeds without error reports, save new data in database.
-    """
-    if status:
-        file.open('wb')
-        file.truncate()
-        file.seek(0)
-        df.to_pickle(file, compression=None)
-        job.save()
-        file.close()
-        return_dict = {
-            'html': mark_safe(df.to_html()),
-        }
-        return JsonResponse(return_dict)
-    else:
-        return JsonResponse({'error': df})
+    choose_data = request.GET['choose_data']
+    option = [job_id, featurizer, target, value, choose_data]
+    backend_p = threading.Thread(target=backend_process, args=option)
+    backend_p.start()
+    return_dict = {
+        'job_id': job_id,
+        'choose_data': choose_data,
+        'html': cache.get(str(job_id) + "_" + choose_data + "_html_graph")
+    }
+    return render(request, 'process.html', return_dict)
 
 
 @login_required
@@ -331,7 +318,7 @@ def download_predict(request):
     :param request:
     :return:
     """
-    file_name = request.session["username"] + ".txt"
+    file_name = request.user.username + ".txt"
     file_path = MEDIA_ROOT + 'predict/' + file_name
 
     def yield_file(file_n):

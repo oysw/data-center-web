@@ -1,11 +1,45 @@
 """
 This file is used to process csv file
 """
+from django.utils.safestring import mark_safe
 import pandas as pd
+from core.models import Job
+from django.core.cache import cache
 from matminer.featurizers import structure
 from matminer.featurizers import composition
 from matminer.featurizers.conversions import StructureToComposition, StrToComposition
 from pymatgen.core.structure import Structure
+
+
+def backend_process(job_id, featurizer, target, value, choose_data):
+    if cache.get("id_list") is None:
+        cache.add("id_list", [], timeout=None)
+    id_list = cache.get("id_list")
+    id_list.append(job_id)
+    cache.set("id_list", id_list, timeout=None)
+    job = Job.objects.get(id=job_id)
+    if choose_data == 'raw':
+        file = job.raw
+    elif choose_data == 'upload':
+        file = job.upload
+    else:
+        return
+    option = [featurizer, target, value]
+    status, df = preprocess(option, file)
+    """
+    If the process of data succeeds without error reports, save new data in database.
+    """
+    if status:
+        file.open('wb')
+        file.truncate()
+        file.seek(0)
+        df.to_pickle(file, compression=None)
+        job.save()
+        file.close()
+        cache.set(str(job_id) + "_" + choose_data + "_html_graph", mark_safe(df.to_html()))
+    id_list = cache.get("id_list")
+    id_list.remove(job_id)
+    cache.set("job_id", id_list, timeout=None)
 
 
 def preprocess(option, file):

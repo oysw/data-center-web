@@ -13,7 +13,7 @@ import joblib
 from core.automl.auto_ml import auto_ml
 from django.core.files import File
 from django.utils.crypto import get_random_string
-from dsweb.settings import MEDIA_ROOT
+from django.core.cache import cache
 from . import post_process
 
 
@@ -215,9 +215,11 @@ def calculate():
             None
     :return:
     """
-    if not is_last_job_finished():
-        return
-    save_current_job_id(os.getpid())
+    calculate_pid = cache.get("calculating_process_id")
+    if calculate_pid is not None:
+        if psutil.pid_exists(calculate_pid):
+            return
+    cache.set("calculating_process_id", os.getpid(), timeout=None)
     job_list = Job.objects.filter(status='W').order_by('create_time')
     if len(job_list) == 0:
         return
@@ -246,34 +248,6 @@ def calculate():
     job.mod = model_file
     job.status = 'F'
     job.save()
-    return
-
-
-def is_last_job_finished():
-    """
-    The current process's ID is stored in /tmp/ai4chem/script/. New job would not start until
-    current job finished.
-    :return:
-    """
-    if not os.path.exists('/tmp/ai4chem/script/ds_current_job.txt'):
-        return True
-    with open('/tmp/ai4chem/script/ds_current_job.txt', 'r') as f:
-        pid = f.read()
-    if psutil.pid_exists(eval(pid)):
-        return False
-    else:
-        return True
-
-
-def save_current_job_id(pid):
-    """
-    :param pid:
-    :return:
-    """
-    if not os.path.exists('/tmp/ai4chem/script/'):
-        os.makedirs('/tmp/ai4chem/script/')
-    with open('/tmp/ai4chem/script/ds_current_job.txt', 'w') as f:
-        f.write(str(pid))
     return
 
 
