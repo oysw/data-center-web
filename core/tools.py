@@ -225,7 +225,7 @@ def calculate():
         return
     job = job_list.first()
     try:
-        data = pd.read_pickle(job.data, compression=None)
+        data = pd.read_pickle(job.raw, compression=None)
     except Exception as e:
         job_error(job, e)
         return
