@@ -13,6 +13,7 @@ from django.http import StreamingHttpResponse
 from django.utils.safestring import mark_safe
 from django.core.files import File
 from django.core.cache import cache
+from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required
 from core.tools import username_check
 from django.utils.crypto import get_random_string
@@ -92,6 +93,7 @@ def logout(request):
     return redirect('/')
 
 
+@cache_page(20)
 @login_required
 def home(request):
     """
