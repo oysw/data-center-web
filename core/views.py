@@ -185,24 +185,31 @@ def upload(request):
 @login_required
 def process_page(request):
     job_id = int(request.GET['job_id'])
-    choose_data = request.GET['choose_data']
-    job = Job.objects.get(id=job_id)
-    if choose_data == 'raw':
-        status, df = preprocess([], job.raw)
-    elif choose_data == 'upload':
-        status, df = preprocess([], job.upload)
+    current_process_ids = cache.get("id_list")
+    if current_process_ids is None or job_id not in current_process_ids:
+        choose_data = request.GET['choose_data']
+        job = Job.objects.get(id=job_id)
+        if choose_data == 'raw':
+            status, df = preprocess([], job.raw)
+        elif choose_data == 'upload':
+            status, df = preprocess([], job.upload)
+        else:
+            return render(request, 'process.html')
+        cache_graph = cache.get(str(job_id) + "_" + choose_data + "_html_graph")
+        if cache_graph is not None:
+            html = cache_graph
+        else:
+            html = mark_safe(df.to_html(classes=['table', 'table-striped', 'table-bordered', 'text-nowrap']))
+        cache.set(str(job_id) + "_" + choose_data + "_html_graph", html)
+        return_dict = {
+            'job_id': job_id,
+            'choose_data': choose_data,
+            'html': html
+        }
     else:
-        return render(request, 'process.html')
-    cache_graph = cache.get(str(job_id) + "_" + choose_data + "_html_graph")
-    if cache_graph is not None:
-        html = cache_graph
-    else:
-        html = mark_safe(df.to_html())
-    return_dict = {
-        'job_id': job_id,
-        'choose_data': choose_data,
-        'html': html
-    }
+        return_dict = {
+            'processing': True
+        }
     return render(request, 'process.html', return_dict)
 
 
@@ -220,9 +227,7 @@ def process(request):
     backend_p = threading.Thread(target=backend_process, args=option)
     backend_p.start()
     return_dict = {
-        'job_id': job_id,
-        'choose_data': choose_data,
-        'html': cache.get(str(job_id) + "_" + choose_data + "_html_graph")
+        'processing': True
     }
     return render(request, 'process.html', return_dict)
 

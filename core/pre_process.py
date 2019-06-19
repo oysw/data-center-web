@@ -36,10 +36,11 @@ def backend_process(job_id, featurizer, target, value, choose_data):
         df.to_pickle(file, compression=None)
         job.save()
         file.close()
-        cache.set(str(job_id) + "_" + choose_data + "_html_graph", mark_safe(df.to_html()))
+        html = mark_safe(df.to_html(classes=['table', 'table-striped', 'table-bordered', 'text-nowrap']))
+        cache.set(str(job_id) + "_" + choose_data + "_html_graph", html)
     id_list = cache.get("id_list")
     id_list.remove(job_id)
-    cache.set("job_id", id_list, timeout=None)
+    cache.set("id_list", id_list, timeout=None)
 
 
 def preprocess(option, file):
@@ -78,11 +79,14 @@ def preprocess(option, file):
         value = option[2]
         # Rename one column of dataframe.
         if featurizer == "rename":
-            columns = list(df.columns)
-            col_index = columns.index(target)
-            columns.remove(target)
-            columns.insert(col_index, value)
-            df.columns = columns
+            try:
+                columns = list(df.columns)
+                col_index = columns.index(target)
+                columns.remove(target)
+                columns.insert(col_index, value)
+                df.columns = columns
+            except Exception as e:
+                return False, repr(e)
         # Convert json format string to structure(Pymatgen class)
         elif featurizer == "strToStructure":
             try:
