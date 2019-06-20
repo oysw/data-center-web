@@ -101,6 +101,7 @@ def home(request):
     :param request:
     :return:
     """
+    print(threading.enumerate())
     username = request.user.username
     jobs = Job.objects.filter(owner=username)
     for job in jobs:
@@ -225,8 +226,8 @@ def process(request):
         value = ""
     job_id = int(request.GET["job_id"])
     choose_data = request.GET['choose_data']
-    option = [job_id, featurizer, target, value, choose_data]
-    backend_p = threading.Thread(target=backend_process, args=option)
+    option = (job_id, featurizer, target, value, choose_data)
+    backend_p = threading.Thread(target=backend_process, args=option, name="backend_process")
     backend_p.start()
     return_dict = {
         'processing': True
