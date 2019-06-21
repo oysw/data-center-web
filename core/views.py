@@ -110,8 +110,22 @@ def home(request):
             job.mod = best.__class__.__name__
         except ValueError:
             pass
+        except FileNotFoundError:
+            job.mod = "Not available"
     return_dict = {'username': username, 'jobs': jobs}
     return render(request, 'home.html', return_dict)
+
+
+@login_required
+@cache_page(5 * 60)
+def home_error(request):
+    """
+    :param request:
+    :return:
+    """
+    job_id = request.GET["job_id"]
+    error = cache.get(job_id + "_error")
+    return JsonResponse({"report": repr(error)})
 
 
 @login_required
@@ -142,6 +156,10 @@ def delete_job(request):
 
 @login_required
 def upload_page(request):
+    """
+    :param request:
+    :return:
+    """
     file_info = {
         'job_id': request.GET['job_id'],
         'choose_data': request.GET['choose_data']
@@ -151,6 +169,10 @@ def upload_page(request):
 
 @login_required
 def upload(request):
+    """
+    :param request:
+    :return:
+    """
     file = request.FILES.get('file')
     try:
         job_id = int(request.POST['job_id'])
@@ -187,28 +209,37 @@ def upload(request):
 
 @login_required
 def process_page(request):
+    """
+
+    :param request:
+    :return:
+    """
     job_id = int(request.GET['job_id'])
     current_process_ids = cache.get("id_list")
     if current_process_ids is None or job_id not in current_process_ids:
         choose_data = request.GET['choose_data']
         job = Job.objects.get(id=job_id)
-        if choose_data == 'raw':
-            status, df = preprocess([], job.raw)
-        elif choose_data == 'upload':
-            status, df = preprocess([], job.upload)
-        else:
-            return render(request, 'process.html')
+        return_dict = {
+            'job_id': job_id,
+            'choose_data': choose_data,
+        }
+        try:
+            if choose_data == 'raw':
+                status, df = preprocess([], job.raw)
+            elif choose_data == 'upload':
+                status, df = preprocess([], job.upload)
+            else:
+                return render(request, 'process.html')
+        except FileNotFoundError:
+            return_dict["error"] = "Your data has been deleted. Please contact administrator."
+            return render(request, 'process.html', return_dict)
         cache_graph = cache.get(str(job_id) + "_" + choose_data + "_html_graph")
         if cache_graph is not None:
             html = cache_graph
         else:
             html = mark_safe(df.to_html(classes=['table', 'table-striped', 'table-bordered', 'text-nowrap']))
         cache.set(str(job_id) + "_" + choose_data + "_html_graph", html)
-        return_dict = {
-            'job_id': job_id,
-            'choose_data': choose_data,
-            'html': html
-        }
+        return_dict['html'] = html
     else:
         return_dict = {
             'processing': True
@@ -218,6 +249,11 @@ def process_page(request):
 
 @login_required
 def process(request):
+    """
+
+    :param request:
+    :return:
+    """
     featurizer = request.GET["featurizer"]
     target = request.GET["target_column"]
     try:
@@ -237,6 +273,10 @@ def process(request):
 
 @login_required
 def submit_page(request):
+    """
+    :param request:
+    :return:
+    """
     job_id = request.GET['job_id']
     job_id = int(job_id)
     job = Job.objects.get(id=job_id)
@@ -290,7 +330,10 @@ def draw_page(request):
     job_id = int(request.GET["job_id"])
     choose_data = request.GET["choose_data"]
     job = Job.objects.get(id=job_id)
-    status, raw_df = preprocess([], job.raw)
+    try:
+        status, raw_df = preprocess([], job.raw)
+    except FileNotFoundError:
+        return render(request, "draw.html", {"error": "Your raw data has been deleted, Please contact administrator."})
     if not status:
         return render(request, "draw.html", {"error": raw_df})
     return_dict = {
@@ -299,7 +342,11 @@ def draw_page(request):
         'raw_columns': list(raw_df.columns)[:-1]
     }
     if choose_data == 'upload':
-        status, upload_df = preprocess([], job.upload)
+        try:
+            status, upload_df = preprocess([], job.upload)
+        except FileNotFoundError:
+            return render(request, "draw.html",
+                          {"error": "Your uploaded data has been deleted, Please contact administrator."})
         if not status:
             return render(request, "draw.html", {"error": upload_df})
         return_dict['upload_columns'] = list(upload_df.columns)
@@ -308,6 +355,10 @@ def draw_page(request):
 
 @login_required
 def draw(request):
+    """
+    :param request:
+    :return:
+    """
     if request.method == 'POST':
         option = request.POST
         html, error = draw_pic(option)

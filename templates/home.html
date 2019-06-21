@@ -59,15 +59,15 @@
                         <td>{{ job.label }}</td>
                         <td>
                             {% if not job.raw %}
-                                <a href="/upload/page?job_id={{ job.id }}&choose_data=raw">
+                                <a title="Data upload" href="/upload/page?job_id={{ job.id }}&choose_data=raw">
                                     <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
                                 </a>
                             {% else %}
-                                <a href="/job/process/page?choose_data=raw&job_id={{ job.id }}">
+                                <a title="Data process" href="/job/process/page?choose_data=raw&job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
                                 </a>
                                 {% if job.mod %}
-                                <a href="/draw/page?choose_data=raw&job_id={{ job.id }}">
+                                <a title="Plot" href="/draw/page?choose_data=raw&job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-picture" aria-hidden="true"></span>
                                 </a>
                                 {% endif %}
@@ -75,15 +75,15 @@
                         </td>
                         <td>
                             {% if not job.upload %}
-                                <a href="/upload/page?job_id={{ job.id }}&choose_data=upload">
+                                <a title="Data upload" href="/upload/page?job_id={{ job.id }}&choose_data=upload">
                                     <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
                                 </a>
                             {% else %}
-                                <a href="/job/process/page?choose_data=upload&job_id={{ job.id }}">
+                                <a title="Data process" href="/job/process/page?choose_data=upload&job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
                                 </a>
                                 {% if job.mod %}
-                                <a href="/draw/page?choose_data=upload&job_id={{ job.id }}">
+                                <a title="Plot" href="/draw/page?choose_data=upload&job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-picture" aria-hidden="true"></span>
                                 </a>
                                 {% endif %}
@@ -97,7 +97,9 @@
                             {% elif job.status == 'W' %}
                                 <label class="label label-default">Waiting</label>
                             {% elif job.status == 'E' %}
-                                <label class="label label-danger">Error</label>
+                                <a tabindex="0" role="button" data-trigger="focus" data-toggle="popover" title="Error report" data-placement="top" onclick="get_error_report(this, {{ job.id }})">
+                                    <label class="label label-danger">Error</label>
+                                </a>
                             {% elif job.status == 'P' %}
                                 <label class="label label-primary">Processing</label>
                             {% elif job.status == 'C' %}
@@ -105,11 +107,11 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="/job/delete?job_id={{ job.id }}">
+                            <a title="Delete" href="/job/delete?job_id={{ job.id }}">
                                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
                             </a>
                             {% if job.raw %}
-                                <a href="/submit/page?job_id={{ job.id }}">
+                                <a title="ML calculation submit" href="/submit/page?job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-send" aria-hidden="true"></span>
                                 </a>
                             {% endif %}
@@ -123,6 +125,21 @@
     <script>
     $(function () {
         $('[data-toggle="tooltip"]').tooltip();
-    })
+    });
+
+
+    function get_error_report(ele, id) {
+        $.ajax({
+            url: "/home/error?job_id=" + id,
+            type: "GET",
+            success: function (value) {
+                ele.dataset.content = value["report"];
+                $(ele).popover('toggle')
+            },
+            error: function (msg) {
+                console.log(msg)
+            }
+        })
+    }
     </script>
 {% endblock %}

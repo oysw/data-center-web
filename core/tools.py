@@ -2,6 +2,7 @@
 Tool used to maintain the program.
 """
 import re
+import time
 import os
 import psutil
 import pandas as pd
@@ -234,11 +235,16 @@ def calculate():
     try:
         x = data[data.columns[0: -1]]
         y = data[data.columns[-1]]
+        print("********* Calculation begins *********")
+        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        print("********* " + current_time + " *********")
         mod = auto_ml(x, y)
+        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        print("********* " + current_time + " *********")
+        print("********* Calculation ends *********")
     except Exception as e:
         job_error(job, e)
         return
-
     temp = BytesIO()
     joblib.dump(mod, temp)
     model_file = File(temp)
@@ -260,7 +266,7 @@ def job_error(job, e):
     :return:
     """
     job.status = 'E'
-    print(e)
     job.save()
-    os.remove('/tmp/ai4chem/script/ds_current_job.txt')
+    cache.set(str(job.id) + "_error", e)
+    cache.set("calculating_process_id", None, timeout=None)
     return

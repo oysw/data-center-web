@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-    {% if not processing %}
+    {% if not processing and not error %}
     <div id="preprocess" class="container">
         <div class="row">
             <label style="font-size: xx-large">Conversion</label>
@@ -121,7 +121,7 @@
             </div>
         </div>
     </div>
-    {% else %}
+    {% elif processing %}
     <div style="position: fixed; opacity: 0.8; top: 0; bottom: 0; left: 0; right: 0; background-color: #333">
         <div class="modal fade bs-example-modal-sm in" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" style="display: block">
             <div class="modal-dialog modal-lg" role="document" style="top: 30%; text-align: center">
@@ -139,6 +139,8 @@
             </div>
         </div>
     </div>
+    {% elif error %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
     {% endif %}
     <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'js/preprocess.js' %}"></script>

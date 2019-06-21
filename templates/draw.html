@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block content %}
+    {% if not error %}
     <div class="container">
         <div id="tabContent" class="tab-content">
             <div id="raw" role="tabpanel" class="tab-pane fade active in">
@@ -95,7 +96,10 @@
         <div class="row col-lg-offset-1">
             <a id="downloadPredict" class="btn btn-success" style="display: none" href="#">Download predict file</a>
         </div>
-    </div> <!-- /container -->
+    </div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endif %}
     <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'js/preprocess.js' %}"></script>
     <script>

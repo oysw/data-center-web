@@ -26,6 +26,8 @@ urlpatterns = [
     path('register/', views.register),
     # Home page jumping
     path('home/', views.home),
+    # Home page error report
+    path('home/error/', views.home_error),
     # Add new job
     path('job/add/', views.add_new_job),
     # Delete new job
