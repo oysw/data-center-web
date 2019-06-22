@@ -293,11 +293,13 @@ def submit_page(request):
     job = Job.objects.get(id=job_id)
     file = job.raw
     df = pd.read_pickle(file, compression=None)
+    df = df[:5]
     file.close()
     columns = list(df.columns)
     return_dict = {
         'job_id': job_id,
-        'columns': columns
+        'columns': columns,
+        'html': mark_safe(df.to_html(classes=['table', 'table-striped', 'table-bordered', 'text-nowrap']))
     }
     return render(request, 'confirm.html', return_dict)
 
@@ -311,7 +313,7 @@ def submit(request):
     """
     job_id = int(request.POST["job_id"])
     # Remove csrf item.
-    target = request.POST['columnAsTarget']
+    target = request.POST['column_as_target']
     columns = list(request.POST)[2:-1]
     job = Job.objects.get(id=job_id)
     file = job.raw

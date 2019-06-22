@@ -11,8 +11,14 @@
             {% csrf_token %}
             <input type="hidden" name="job_id" value="{{ job_id }}">
             <div class="row">
+                <label style="font-size: x-large">Data review: (Part)</label>
+                <div style="overflow-x: scroll">
+                    {{ html }}
+                </div>
+            </div>
+            <div class="row">
+                <label style="font-size: x-large" class="control-label">Select columns for calculating: </label>
                 <div class="col-lg-12">
-                    <label class="control-label">Select columns for calculating: </label>
                     <div class="form-inline" style="height: 100px; border: 1px solid #dbdbdb; border-radius: 5px; padding: 10px; overflow-y: scroll">
                         {% for column in columns %}
                             <div class="col-lg-4">
@@ -31,18 +37,19 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-lg-3">
-                    <div class="form-group">
-                        <label class="control-label">Select target column: </label>
-                        <select name="columnAsTarget" class="form-control">
-                            {% for column in columns %}
-                                <option value="{{ column }}">{{ column }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <br>
+                <label style="font-size: x-large" class="control-label">Select target column: </label>
+                <br>
+                <div class="col-lg-3 form-inline">
+                    <select name="column_as_target" class="form-control">
+                        {% for column in columns %}
+                            <option value="{{ column }}">{{ column }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="row">
+                <br>
                 <div class="col-lg-2">
                     <button type="submit" class="btn btn-primary">
                         confirm
