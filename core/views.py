@@ -18,7 +18,7 @@ from core.tools import username_check
 from django.utils.crypto import get_random_string
 from core.models import Job
 from core.tools import draw_pic
-from core.pre_process import preprocess, backend_process
+from core.pre_process import preprocess
 from dsweb.settings import MEDIA_ROOT
 # Create your views here.
 
@@ -275,6 +275,11 @@ def process(request):
     process_list = cache.get("backend_process")
     process_list.append(option)
     cache.set("backend_process", process_list, timeout=None)
+    if cache.get("id_list") is None:
+        cache.add("id_list", [], timeout=None)
+    id_list = cache.get("id_list")
+    id_list.append(job_id)
+    cache.set("id_list", id_list, timeout=None)
     # Return a signal to front page to avoid new conversion task submitting.
     return_dict = {
         'processing': True

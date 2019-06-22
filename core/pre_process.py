@@ -11,19 +11,25 @@ from matminer.featurizers.conversions import StructureToComposition, StrToCompos
 from pymatgen.core.structure import Structure
 
 
-def backend_process():
+def backend_preprocess():
     """
     :return:
     """
-    process_list = cache.get("backend_process")
-    option = process_list.pop(0)
-    cache.set("backend_process", process_list, timeout=None)
+    while True:
+        process_list = cache.get("backend_process")
+        if not process_list:
+            return
+        option = process_list.pop(0)
+        print("There are {} jobs in the waiting list".format(len(process_list)))
+        cache.set("backend_process", process_list, timeout=None)
+        preprocess_control(option)
+
+
+def preprocess_control(option):
+    """
+    :return:
+    """
     job_id, featurizer, target, value, choose_data = option
-    if cache.get("id_list") is None:
-        cache.add("id_list", [], timeout=None)
-    id_list = cache.get("id_list")
-    id_list.append(job_id)
-    cache.set("id_list", id_list, timeout=None)
     job = Job.objects.get(id=job_id)
     if choose_data == 'raw':
         file = job.raw
@@ -32,7 +38,7 @@ def backend_process():
     else:
         return
     option = [featurizer, target, value]
-    print("Process begin!")
+    print("Process {} for job {} begin!".format(featurizer, job_id))
     status, df = preprocess(option, file)
     # If the process of data succeeds without error reports, save new data in database.
     if status:
@@ -42,14 +48,14 @@ def backend_process():
         df.to_pickle(file, compression=None)
         job.save()
         file.close()
-        print("Caching begin!")
+        print("Caching {} for job {} begin!".format(featurizer, job_id))
         html = mark_safe(df.to_html(classes=['table', 'table-striped', 'table-bordered', 'text-nowrap']))
         cache.set(str(job_id) + "_" + choose_data + "_html_graph", html)
     # Processing finished. Delete job id to enable extra more conversions of this data.
     id_list = cache.get("id_list")
     id_list.remove(job_id)
     cache.set("id_list", id_list, timeout=None)
-    print("Process finished!")
+    print("Process {} for job {} finished!".format(featurizer, job_id))
 
 
 def preprocess(option, file):
