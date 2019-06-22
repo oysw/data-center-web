@@ -65,7 +65,7 @@
                         <div style="border: 1px solid #dbdbdb; border-radius: 5px; padding: 10px">
                             <div class="form-inline" style="height: 100px; overflow-y: scroll">
                                 {% for column in upload_columns %}
-                                    <div class="checkbox">
+                                    <div class="col-lg-4 checkbox">
                                         <label>
                                             <input type="checkbox" name="{{ column }}">{{ column }}
                                         </label>
@@ -115,7 +115,11 @@
                 }
             }
             if (col_count !== raw_col_length){
-                alert("The number of selected columns doesn't match the raw data! (Total: " + raw_col_length + ")");
+                alert(
+                    "The number of selected columns doesn't match the raw data!\n" +
+                    "Required: " + raw_col_length + "\n" +
+                    "Selected: " + col_count
+                );
                 return 0
             }
         }
