@@ -3,7 +3,6 @@ Request handler.
 """
 import pandas as pd
 import joblib
-import threading
 from io import BytesIO
 from django.shortcuts import render, redirect
 from django.contrib import auth
@@ -101,7 +100,6 @@ def home(request):
     :param request:
     :return:
     """
-    print(threading.enumerate())
     username = request.user.username
     jobs = Job.objects.filter(owner=username)
     for job in jobs:
@@ -272,8 +270,11 @@ def process(request):
     job_id = int(request.GET["job_id"])
     choose_data = request.GET['choose_data']
     option = (job_id, featurizer, target, value, choose_data)
-    backend_p = threading.Thread(target=backend_process, args=option, name="backend_process")
-    backend_p.start()
+    if cache.get("backend_process") is None:
+        cache.add("backend_process", [], timeout=None)
+    process_list = cache.get("backend_process")
+    process_list.append(option)
+    cache.set("backend_process", process_list, timeout=None)
     # Return a signal to front page to avoid new conversion task submitting.
     return_dict = {
         'processing': True

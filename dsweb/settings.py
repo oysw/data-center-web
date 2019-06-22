@@ -133,6 +133,7 @@ MEDIA_ROOT = '/tmp/ai4chem/'
 # cron tasks
 CRONJOBS = [
     ('* * * * *', 'core.tools.calculate', '>> /tmp/ai4chem/job_download_status.log'),
+    ('* * * * *', 'core.tools.backend_process', '>> /tmp/ai4chem/preprocess_status.log'),
 ]
 
 # Cache system

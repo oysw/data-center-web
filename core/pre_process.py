@@ -11,16 +11,14 @@ from matminer.featurizers.conversions import StructureToComposition, StrToCompos
 from pymatgen.core.structure import Structure
 
 
-def backend_process(job_id, featurizer, target, value, choose_data):
+def backend_process():
     """
-    New thread to process featurizer to avoid long time waiting in the front page.
-    :param job_id:
-    :param featurizer: (Conversion method)
-    :param target: (Target column)
-    :param value: (Extra parameter)
-    :param choose_data: Raw data (For calculating and fitting) or uploaded data (For plotting)
     :return:
     """
+    process_list = cache.get("backend_process")
+    option = process_list.pop(0)
+    cache.set("backend_process", process_list, timeout=None)
+    job_id, featurizer, target, value, choose_data = option
     if cache.get("id_list") is None:
         cache.add("id_list", [], timeout=None)
     id_list = cache.get("id_list")
