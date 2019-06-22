@@ -34,6 +34,11 @@ def username_check(username):
 
 
 def draw_pic(option):
+    """
+    Generate uploaded file based graph or raw file based graph.
+    :param option:
+    :return:
+    """
     job_id = int(option["job_id"])
     job = Job.objects.get(id=job_id)
     data = pd.read_pickle(job.raw, compression=None)
@@ -55,10 +60,6 @@ def draw_pic(option):
             print(_e)
             return "", "Uploaded file is invalid."
         try:
-            """
-            Not all the columns could be used for prediction. Only pure numbers is acceptable.
-            Even though there are restrictions on front-end page, possible flaws may occur.
-            """
             plot_columns = []
             for key in option:
                 if option[key] == "on":

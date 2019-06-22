@@ -12,6 +12,15 @@ from pymatgen.core.structure import Structure
 
 
 def backend_process(job_id, featurizer, target, value, choose_data):
+    """
+    New thread to process featurizer to avoid long time waiting in the front page.
+    :param job_id:
+    :param featurizer: (Conversion method)
+    :param target: (Target column)
+    :param value: (Extra parameter)
+    :param choose_data: Raw data (For calculating and fitting) or uploaded data (For plotting)
+    :return:
+    """
     if cache.get("id_list") is None:
         cache.add("id_list", [], timeout=None)
     id_list = cache.get("id_list")
@@ -27,9 +36,7 @@ def backend_process(job_id, featurizer, target, value, choose_data):
     option = [featurizer, target, value]
     print("Process begin!")
     status, df = preprocess(option, file)
-    """
-    If the process of data succeeds without error reports, save new data in database.
-    """
+    # If the process of data succeeds without error reports, save new data in database.
     if status:
         file.open('wb')
         file.truncate()
@@ -40,6 +47,7 @@ def backend_process(job_id, featurizer, target, value, choose_data):
         print("Caching begin!")
         html = mark_safe(df.to_html(classes=['table', 'table-striped', 'table-bordered', 'text-nowrap']))
         cache.set(str(job_id) + "_" + choose_data + "_html_graph", html)
+    # Processing finished. Delete job id to enable extra more conversions of this data.
     id_list = cache.get("id_list")
     id_list.remove(job_id)
     cache.set("id_list", id_list, timeout=None)
@@ -48,8 +56,16 @@ def backend_process(job_id, featurizer, target, value, choose_data):
 
 def preprocess(option, file):
     """
-    Remove the NaN
-    Change the columns of dataframe and calculate chemical features
+    Convert the columns of dataframe and calculate chemical features
+    The format of option is [featurizer, target-column, value].
+    'featurizer' is the wanted way to process data.
+    e.g. rename, strToStructure, structureToComposition, strToComposition
+    'target-column' is the column to be processed.
+    'value' is the extra needed parameter for featurizer
+    e.g. 'rename' method needs new name to proceed.
+    If empty list [] is provided, this function will only try to remove NaN columns and rows.
+    :param: option (Parameters required by conversion)
+    :param: File containing dataframe(Pandas class)
     :return: Dataframe
     """
     try:
@@ -69,11 +85,6 @@ def preprocess(option, file):
                 return False, repr(e)
     finally:
         file.close()
-    """
-    The format of option is [featurizer, target column, value].
-    'featurizer' is the wanted way to process data.
-    If empty list [] is provided, this function will only try to remove NaN columns and rows.
-    """
     if not option:
         df = df.dropna(axis=0, how="all").dropna(axis=1)
     else:
