@@ -13,6 +13,8 @@ from pymatgen.core.structure import Structure
 
 def backend_preprocess():
     """
+    Execute every minutes to exam whether there are submitted featurize task.
+    Call the preprocess_control function to complete the task.
     :return:
     """
     while True:
@@ -27,6 +29,8 @@ def backend_preprocess():
 
 def preprocess_control(option):
     """
+    Convert the dataframe with assigned featurizer and update the database with new dataframe.
+    Writing new table html-format code into cache.
     :return:
     """
     job_id, featurizer, target, value, choose_data = option
