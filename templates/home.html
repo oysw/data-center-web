@@ -100,6 +100,8 @@
                                 <a tabindex="0" role="button" data-trigger="focus" data-toggle="popover" title="Error report" data-placement="top" onclick="get_error_report(this, {{ job.id }})">
                                     <label class="label label-danger">Error</label>
                                 </a>
+                            {% elif job.status == 'I' %}
+                                <label class="label label-default">Idle</label>
                             {% elif job.status == 'P' %}
                                 <label class="label label-primary">Processing</label>
                             {% elif job.status == 'C' %}

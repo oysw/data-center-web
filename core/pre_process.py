@@ -59,6 +59,8 @@ def preprocess_control(option):
     id_list = cache.get("id_list")
     id_list.remove(job_id)
     cache.set("id_list", id_list, timeout=None)
+    job.status = 'I'
+    job.save()
     print("Process {} for job {} finished!".format(featurizer, job_id))
 
 

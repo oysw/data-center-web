@@ -7,6 +7,7 @@ class Job(models.Model):
         ('F', 'Finished'),
         ('W', 'Waiting'),
         ('E', 'Error'),
+        ('I', 'Idle'),
         ('P', 'Process'),
         ('C', 'Calculating'),
     )
@@ -16,7 +17,7 @@ class Job(models.Model):
     mod = models.FileField(blank=True, upload_to='model/')
     upload = models.FileField(blank=True, upload_to='upload/')
     create_time = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=10, default='P', choices=STATUS)
+    status = models.CharField(max_length=10, default='I', choices=STATUS)
 
     def __int__(self):
         return self.id

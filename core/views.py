@@ -270,6 +270,9 @@ def process(request):
     job_id = int(request.GET["job_id"])
     choose_data = request.GET['choose_data']
     option = (job_id, featurizer, target, value, choose_data)
+    job = Job.objects.get(id=job_id)
+    job.status = 'P'
+    job.save()
     if cache.get("backend_process") is None:
         cache.add("backend_process", [], timeout=None)
     process_list = cache.get("backend_process")
