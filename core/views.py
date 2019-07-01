@@ -17,7 +17,7 @@ from django.contrib.auth.decorators import login_required
 from core.tools import username_check
 from django.utils.crypto import get_random_string
 from core.models import Job
-from core.tools import draw_pic
+from core.tools import draw_pic, preprocess
 from dsweb.settings import MEDIA_ROOT
 from core.tasks import featurize, calculate
 # Create your views here.
@@ -189,7 +189,7 @@ def upload(request):
         return_dict['error'] = 'Please choose a file!'
         return render(request, 'upload.html', return_dict)
     job = Job.objects.get(id=job_id)
-    status, df = featurize([], file)
+    status, df = preprocess([], file)
     if status:
         file = File(BytesIO())
         df.to_pickle(file, compression=None)
@@ -217,9 +217,8 @@ def process_page(request):
     :return:
     """
     job_id = int(request.GET['job_id'])
-    current_process_ids = cache.get("id_list")
     # Read the cache to find out whether current job is being processed.
-    if current_process_ids is None or job_id not in current_process_ids:
+    if True:
         choose_data = request.GET['choose_data']
         job = Job.objects.get(id=job_id)
         return_dict = {
@@ -228,9 +227,9 @@ def process_page(request):
         }
         try:
             if choose_data == 'raw':
-                status, df = featurize([], job.raw)
+                df = pd.read_pickle(job.raw, compression=None)
             elif choose_data == 'upload':
-                status, df = featurize([], job.upload)
+                df = pd.read_pickle(job.upload, compression=None)
             else:
                 return render(request, 'process.html')
         except FileNotFoundError:
@@ -270,23 +269,15 @@ def process(request):
     job_id = int(request.GET["job_id"])
     choose_data = request.GET['choose_data']
     option = (job_id, featurizer, target, value, choose_data)
+    res = featurize.delay(option)
     job = Job.objects.get(id=job_id)
     job.status = 'P'
     job.save()
-    if cache.get("backend_process") is None:
-        cache.add("backend_process", [], timeout=None)
-    process_list = cache.get("backend_process")
-    process_list.append(option)
-    cache.set("backend_process", process_list, timeout=None)
-    if cache.get("id_list") is None:
-        cache.add("id_list", [], timeout=None)
-    id_list = cache.get("id_list")
-    id_list.append(job_id)
-    cache.set("id_list", id_list, timeout=None)
     # Return a signal to front page to avoid new conversion task submitting.
     return_dict = {
         'processing': True
     }
+    print("async task res", res.get())
     return render(request, 'process.html', return_dict)
 
 
@@ -357,11 +348,9 @@ def draw_page(request):
     choose_data = request.GET["choose_data"]
     job = Job.objects.get(id=job_id)
     try:
-        status, raw_df = featurize([], job.raw)
+        raw_df = pd.read_pickle(job.raw, compression=None)
     except FileNotFoundError:
         return render(request, "draw.html", {"error": "Your raw data has been deleted, Please contact administrator."})
-    if not status:
-        return render(request, "draw.html", {"error": raw_df})
     return_dict = {
         'job_id': job_id,
         'choose_data': choose_data,
@@ -369,12 +358,10 @@ def draw_page(request):
     }
     if choose_data == 'upload':
         try:
-            status, upload_df = featurize([], job.upload)
+            upload_df = pd.read_pickle(job.upload, compression=None)
         except FileNotFoundError:
             return render(request, "draw.html",
                           {"error": "Your uploaded data has been deleted, Please contact administrator."})
-        if not status:
-            return render(request, "draw.html", {"error": upload_df})
         return_dict['upload_columns'] = list(upload_df.columns)
     return render(request, "draw.html", return_dict)
 

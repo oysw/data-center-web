@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_crontab',
+    'django_celery_results',
     'core',
 ]
 
@@ -130,11 +130,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/tmp/ai4chem/'
 
-# cron tasks
-CRONJOBS = [
-    ('* * * * *', 'core.tools.calculate', '>> /tmp/ai4chem/job_download_status.log'),
-    ('* * * * *', 'core.pre_process.backend_preprocess', '>> /tmp/ai4chem/preprocess_status.log')
-]
+# Celery settings
+
+CELERY_BROKER_URL = 'redis://localhost'
+CELERY_RESULT_BACKEND = 'redis://localhost'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 # Cache system
 CACHES = {
