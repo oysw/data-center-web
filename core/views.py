@@ -1,9 +1,9 @@
 """
 Request handler.
 """
+from io import BytesIO
 import pandas as pd
 import joblib
-from io import BytesIO
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.models import User
@@ -18,8 +18,8 @@ from core.tools import username_check
 from django.utils.crypto import get_random_string
 from core.models import Job
 from core.tools import draw_pic
-from core.pre_process import preprocess
 from dsweb.settings import MEDIA_ROOT
+from core.tasks import featurize, calculate
 # Create your views here.
 
 
@@ -189,7 +189,7 @@ def upload(request):
         return_dict['error'] = 'Please choose a file!'
         return render(request, 'upload.html', return_dict)
     job = Job.objects.get(id=job_id)
-    status, df = preprocess([], file)
+    status, df = featurize([], file)
     if status:
         file = File(BytesIO())
         df.to_pickle(file, compression=None)
@@ -228,9 +228,9 @@ def process_page(request):
         }
         try:
             if choose_data == 'raw':
-                status, df = preprocess([], job.raw)
+                status, df = featurize([], job.raw)
             elif choose_data == 'upload':
-                status, df = preprocess([], job.upload)
+                status, df = featurize([], job.upload)
             else:
                 return render(request, 'process.html')
         except FileNotFoundError:
@@ -342,6 +342,7 @@ def submit(request):
     # Status from processing to waiting.
     job.status = "W"
     job.save()
+    calculate(job_id)
     return home(request)
 
 
@@ -356,7 +357,7 @@ def draw_page(request):
     choose_data = request.GET["choose_data"]
     job = Job.objects.get(id=job_id)
     try:
-        status, raw_df = preprocess([], job.raw)
+        status, raw_df = featurize([], job.raw)
     except FileNotFoundError:
         return render(request, "draw.html", {"error": "Your raw data has been deleted, Please contact administrator."})
     if not status:
@@ -368,7 +369,7 @@ def draw_page(request):
     }
     if choose_data == 'upload':
         try:
-            status, upload_df = preprocess([], job.upload)
+            status, upload_df = featurize([], job.upload)
         except FileNotFoundError:
             return render(request, "draw.html",
                           {"error": "Your uploaded data has been deleted, Please contact administrator."})

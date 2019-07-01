@@ -2,20 +2,18 @@
 Tool used to maintain the program.
 """
 import re
-import time
 import os
-import psutil
 import pandas as pd
-from core.models import Job
+import numpy as np
+from matminer.featurizers import structure
+from matminer.featurizers import composition
+from matminer.featurizers.conversions import StructureToComposition, StrToComposition
+from pymatgen.core.structure import Structure
 import plotly.offline as of
 import plotly.graph_objs as go
-from io import BytesIO
 import joblib
-from core.automl.auto_ml import auto_ml
-from django.core.files import File
-from django.utils.crypto import get_random_string
 from django.core.cache import cache
-from . import post_process
+from core.models import Job
 
 
 def username_check(username):
@@ -71,7 +69,7 @@ def draw_pic(option):
     else:
         return "", "Please choose a data type"
 
-    post_process.predict_file_create(y_pred, job.owner)
+    predict_file_create(y_pred, job.owner)
 
     try:
         # Select columns need to be plotted.
@@ -205,59 +203,6 @@ def draw_pic_3d(option, x, y, x_test, y_pred):
     return html
 
 
-def calculate():
-    """
-    This function is scheduled to work every minutes. Powered by crontab in Linux system.
-    It doesn't work in Windows system.
-    Analyze the data and save the machine learning models provided by sklearn.
-    Currently involved models:
-        Regression：
-            Linear, Nearest Neighbour, Random Forests, Support Vectors Machine, Multiple Layers Perception.
-        Classification:
-            None
-    :return:
-    """
-    calculate_pid = cache.get("calculating_process_id")
-    if calculate_pid is not None:
-        if psutil.pid_exists(calculate_pid):
-            return
-    cache.set("calculating_process_id", os.getpid(), timeout=None)
-    job_list = Job.objects.filter(status='W').order_by('create_time')
-    if len(job_list) == 0:
-        return
-    job = job_list.first()
-    try:
-        data = pd.read_pickle(job.raw, compression=None)
-    except Exception as e:
-        job_error(job, e)
-        return
-    job.status = 'C'
-    job.save()
-    try:
-        x = data[data.columns[0: -1]]
-        y = data[data.columns[-1]]
-        print("********* Calculation begins *********")
-        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        print("********* " + current_time + " *********")
-        mod = auto_ml(x, y)
-        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        print("********* " + current_time + " *********")
-        print("********* Calculation ends *********")
-    except Exception as e:
-        job_error(job, e)
-        return
-    temp = BytesIO()
-    joblib.dump(mod, temp)
-    model_file = File(temp)
-    model_file.name = 'model_' + get_random_string(7)
-
-    # Save result
-    job.mod = model_file
-    job.status = 'F'
-    job.save()
-    return
-
-
 def job_error(job, e):
     """
     Used for error processing.
@@ -271,3 +216,120 @@ def job_error(job, e):
     cache.set(str(job.id) + "_error", e)
     cache.set("calculating_process_id", None, timeout=None)
     return
+
+
+def preprocess(option, file):
+    """
+    Convert the columns of dataframe and calculate chemical features
+    The format of option is [featurizer, target-column, value].
+    'featurizer' is the wanted way to process data.
+    e.g. rename, strToStructure, structureToComposition, strToComposition
+    'target-column' is the column to be processed.
+    'value' is the extra needed parameter for featurizer
+    e.g. 'rename' method needs new name to proceed.
+    If empty list [] is provided, this function will only try to remove NaN columns and rows.
+    :param: option (Parameters required by conversion)
+    :param: File containing dataframe(Pandas class)
+    :return: Dataframe
+    """
+    try:
+        # The file may be json, csv and pickle format.
+        file.seek(0)
+        df = pd.read_pickle(file, compression=None)
+    except Exception as e:
+        print(e)
+        try:
+            file.seek(0)
+            df = pd.read_json(file)
+        except ValueError:
+            try:
+                file.seek(0)
+                df = pd.read_csv(file)
+            except Exception as e:
+                return False, repr(e)
+    finally:
+        file.close()
+    if not option:
+        df = df.dropna(axis=0, how="all").dropna(axis=1)
+    else:
+        featurizer = option[0]
+        target = option[1]
+        value = option[2]
+        # Rename one column of dataframe.
+        if featurizer == "rename":
+            try:
+                columns = list(df.columns)
+                col_index = columns.index(target)
+                columns.remove(target)
+                columns.insert(col_index, value)
+                df.columns = columns
+            except Exception as e:
+                return False, repr(e)
+        # Convert json format string to structure(Pymatgen class)
+        elif featurizer == "strToStructure":
+            try:
+                df[target] = [Structure.from_str(i, 'json') for i in df[target]]
+            except Exception as e:
+                return False, repr(e)
+        # Convert structure(Pymatgen class) to composition(Pymatgen class)
+        elif featurizer == "structureToComposition":
+            try:
+                df = StructureToComposition().featurize_dataframe(df, target)
+            except Exception as e:
+                return False, repr(e)
+        # Convert string to composition(Pymatgen class)
+        elif featurizer == "strToComposition":
+            try:
+                df = StrToComposition().featurize_dataframe(df, target)
+            except Exception as e:
+                return False, repr(e)
+        else:
+            try:
+                # Provided by matminer to process structure(Pymatgen class).
+                convert = structure.__dict__[featurizer]()
+            except KeyError:
+                try:
+                    # Provide by matminer to process composition(Pymatgen class).
+                    convert = composition.__dict__[featurizer]()
+                except KeyError:
+                    df = space_check(df)
+                    return True, df
+            try:
+                df = convert.featurize_dataframe(df, target)
+            except Exception as e:
+                return False, repr(e)
+    df = space_check(df)
+    return True, df
+
+
+def space_check(dataframe):
+    """
+    Since it's hard for form submission if there are spaces, and there may be unpredictable error on the
+    front-end page, we need to convert space to _.
+    :param dataframe:
+    :return:
+    """
+    df = dataframe
+    columns = list(df.columns)
+    new_col = []
+    for i in columns:
+        new_col.append(i.replace(" ", "_"))
+    df.columns = new_col
+    return df
+
+
+def predict_file_create(y_predict, username):
+    """
+    Generate pure text file containing predict data.
+    The file is saved in /tmp/ai4chem/predict/
+    :param y_predict:
+    :param username:
+    :return:
+    """
+    predict_dir = '/tmp/ai4chem/predict/'
+    try:
+        os.makedirs(predict_dir)
+    except FileExistsError:
+        pass
+    predict_file = predict_dir + username + '.txt'
+    np.savetxt(predict_file, y_predict, fmt="%f", delimiter=',')
