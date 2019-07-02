@@ -112,7 +112,7 @@
                             <a title="Delete" href="/job/delete?job_id={{ job.id }}">
                                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
                             </a>
-                            {% if job.raw %}
+                            {% if job.status == 'I' and job.raw %}
                                 <a title="ML calculation submit" href="/submit/page?job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-send" aria-hidden="true"></span>
                                 </a>
