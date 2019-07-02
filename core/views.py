@@ -20,6 +20,7 @@ from core.models import Job
 from core.tools import draw_pic, preprocess
 from dsweb.settings import MEDIA_ROOT
 from core.tasks import featurize, calculate
+from dsweb.celery import app
 # Create your views here.
 
 
@@ -217,8 +218,9 @@ def process_page(request):
     :return:
     """
     job_id = int(request.GET['job_id'])
-    # Read the cache to find out whether current job is being processed.
-    if True:
+    res = cache.get("job_featurize_" + str(job_id))
+    if res is None or res.ready():
+        cache.set("job_featurize_" + str(job_id), None)
         choose_data = request.GET['choose_data']
         job = Job.objects.get(id=job_id)
         return_dict = {
@@ -269,7 +271,8 @@ def process(request):
     job_id = int(request.GET["job_id"])
     choose_data = request.GET['choose_data']
     option = (job_id, featurizer, target, value, choose_data)
-    res = featurize.delay(option)
+    result = featurize.delay(option)
+    cache.set("job_featurize_" + str(job_id), result)
     job = Job.objects.get(id=job_id)
     job.status = 'P'
     job.save()
@@ -277,7 +280,6 @@ def process(request):
     return_dict = {
         'processing': True
     }
-    print("async task res", res.get())
     return render(request, 'process.html', return_dict)
 
 
@@ -333,7 +335,7 @@ def submit(request):
     # Status from processing to waiting.
     job.status = "W"
     job.save()
-    calculate(job_id)
+    calculate.delay(job_id)
     return home(request)
 
 

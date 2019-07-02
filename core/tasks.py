@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 import time
+import multiprocessing as mp
 from io import BytesIO
 import pandas as pd
 import joblib
@@ -41,6 +42,7 @@ def calculate(job_id):
         print("********* Calculation begins *********")
         current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         print("********* " + current_time + " *********")
+        mp.current_process().daemon = False
         mod = auto_ml(x, y)
         current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         print("********* " + current_time + " *********")
@@ -76,6 +78,7 @@ def featurize(option):
         return
     option = [featurizer, target, value]
     print("Process {} for job {} begin!".format(featurizer, job_id))
+    mp.current_process().daemon = False
     status, df = preprocess(option, file)
     # If the process of data succeeds without error reports, save new data in database.
     if status:
@@ -88,6 +91,8 @@ def featurize(option):
         print("Caching {} for job {} begin!".format(featurizer, job_id))
         html = mark_safe(df.to_html(classes=['table', 'table-striped', 'table-bordered', 'text-nowrap']))
         cache.set(str(job_id) + "_" + choose_data + "_html_graph", html)
+    else:
+        print(df)
     job.status = 'I'
     job.save()
     print("Process {} for job {} finished!".format(featurizer, job_id))
