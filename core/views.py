@@ -272,7 +272,7 @@ def process(request):
     choose_data = request.GET['choose_data']
     option = (job_id, featurizer, target, value, choose_data)
     result = featurize.delay(option)
-    cache.set("job_featurize_" + str(job_id), result)
+    cache.set("job_featurize_" + str(job_id), result, timeout=None)
     job = Job.objects.get(id=job_id)
     job.status = 'P'
     job.save()
