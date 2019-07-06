@@ -9,9 +9,9 @@ from django.core.files import File
 from django.utils.crypto import get_random_string
 from django.utils.safestring import mark_safe
 from django.core.cache import cache
-from core.models import Job
+from ai4chem.models import Job
 from .tools import job_error, preprocess
-from core.automl.auto_ml import auto_ml
+from ai4chem.automl.auto_ml import auto_ml
 
 
 @shared_task

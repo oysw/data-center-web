@@ -14,13 +14,12 @@ from django.core.files import File
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required
-from core.tools import username_check
+from ai4chem.tools import username_check
 from django.utils.crypto import get_random_string
-from core.models import Job
-from core.tools import draw_pic, preprocess
-from dsweb.settings import MEDIA_ROOT
-from core.tasks import featurize, calculate
-from dsweb.celery import app
+from ai4chem.models import Job
+from ai4chem.tools import draw_pic, preprocess
+from datacenter.settings import MEDIA_ROOT
+from ai4chem.tasks import featurize, calculate
 # Create your views here.
 
 
