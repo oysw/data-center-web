@@ -13,7 +13,7 @@ import plotly.offline as of
 import plotly.graph_objs as go
 import joblib
 from django.core.cache import cache
-from core.models import Job
+from ai4chem.models import Job
 
 structure_featurizers = [
     'DensityFeatures',
