@@ -7,13 +7,69 @@ import pandas as pd
 import numpy as np
 from matminer.featurizers import structure
 from matminer.featurizers import composition
-from matminer.featurizers.conversions import StructureToComposition, StrToComposition
+from matminer.featurizers import conversions
 from pymatgen.core.structure import Structure
 import plotly.offline as of
 import plotly.graph_objs as go
 import joblib
 from django.core.cache import cache
 from core.models import Job
+
+structure_featurizers = [
+    'DensityFeatures',
+    'GlobalSymmetryFeatures',
+    'Dimensionality',
+    'RadialDistributionFunction',
+    'PartialRadialDistributionFunction',
+    'ElectronicRadialDistributionFunction',
+    'CoulombMatrix',
+    'SineCoulombMatrix',
+    'OrbitalFieldMatrix',
+    'MinimumRelativeDistances',
+    'SiteStatsFingerprint',
+    'EwaldEnergy',
+    'BondFractions',
+    'BagofBonds',
+    'StructuralHeterogeneity',
+    'MaximumPackingEfficiency',
+    'ChemicalOrdering',
+    'StructureComposition',
+    'XRDPowderPattern',
+    'CGCNNFeaturizer',
+    'JarvisCFID',
+    'SOAP',
+    'GlobalInstabilityIndex'
+]
+
+composition_featurizers = [
+    'ElementProperty',
+    'OxidationStates',
+    'AtomicOrbitals',
+    'BandCenter',
+    'ElectronegativityDiff',
+    'ElectronAffinity',
+    'Stoichiometry',
+    'ValenceOrbital',
+    'IonProperty',
+    'ElementFraction',
+    'TMetalFraction',
+    'CohesiveEnergy',
+    'Miedema',
+    'YangSolidSolution',
+    'AtomicPackingEfficiency'
+]
+
+conversions_utils = [
+    'ConversionFeaturizer',
+    'StrToComposition',
+    'StructureToComposition',
+    'StructureToIStructure',
+    'DictToObject',
+    'JsonToObject',
+    'StructureToOxidStructure',
+    'CompositionToOxidComposition',
+    'CompositionToStructureFromMP'
+]
 
 
 def username_check(username):
@@ -271,29 +327,21 @@ def preprocess(option, file):
                 df[target] = [Structure.from_str(i, 'json') for i in df[target]]
             except Exception as e:
                 return False, repr(e)
-        # Convert structure(Pymatgen class) to composition(Pymatgen class)
-        elif featurizer == "structureToComposition":
-            try:
-                df = StructureToComposition().featurize_dataframe(df, target)
-            except Exception as e:
-                return False, repr(e)
-        # Convert string to composition(Pymatgen class)
-        elif featurizer == "strToComposition":
-            try:
-                df = StrToComposition().featurize_dataframe(df, target)
-            except Exception as e:
-                return False, repr(e)
         else:
-            try:
+            # Convert structure(Pymatgen class) to composition(Pymatgen class)
+            if featurizer in conversions_utils:
+                convert = conversions.__dict__[featurizer]()
+            elif featurizer in structure_featurizers:
                 # Provided by matminer to process structure(Pymatgen class).
-                convert = structure.__dict__[featurizer]()
-            except KeyError:
-                try:
-                    # Provide by matminer to process composition(Pymatgen class).
-                    convert = composition.__dict__[featurizer]()
-                except KeyError:
-                    df = space_check(df)
-                    return True, df
+                if featurizer == "CoulombMatrix":
+                    convert = structure.CoulombMatrix().fit(df[target])
+                else:
+                    convert = structure.__dict__[featurizer]()
+            elif featurizer in composition_featurizers:
+                # Provide by matminer to process composition(Pymatgen class).
+                convert = composition.__dict__[featurizer]()
+            else:
+                return False, "No featurizer available!"
             try:
                 df = convert.featurize_dataframe(df, target)
             except Exception as e:
