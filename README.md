@@ -1,4 +1,4 @@
-﻿# Data center web
+# Data center
 ## Introduce
 This is a web based AI application especially for chemistry.
 
