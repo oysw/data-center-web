@@ -8,6 +8,7 @@ import numpy as np
 from matminer.featurizers import structure
 from matminer.featurizers import composition
 from matminer.featurizers import conversions
+from matminer.featurizers import site
 from pymatgen.core.structure import Structure
 import plotly.offline as of
 import plotly.graph_objs as go
@@ -33,7 +34,6 @@ structure_featurizers = [
     'StructuralHeterogeneity',
     'MaximumPackingEfficiency',
     'ChemicalOrdering',
-    'StructureComposition',
     'XRDPowderPattern',
     'CGCNNFeaturizer',
     'JarvisCFID',
@@ -333,17 +333,32 @@ def preprocess(option, file):
                 convert = conversions.__dict__[featurizer]()
             elif featurizer in structure_featurizers:
                 # Provided by matminer to process structure(Pymatgen class).
-                if featurizer == "CoulombMatrix":
-                    convert = structure.CoulombMatrix().fit(df[target])
+                if featurizer in ["ElectronicRadialDistributionFunction",
+                                  "EwaldEnergy",
+                                  "BondFractions",
+                                  "GlobalInstabilityIndex"]:
+                    [i.add_oxidation_state_by_guess() for i in df[target]]
+                if featurizer in ["CoulombMatrix",
+                                  "PartialRadialDistributionFunction",
+                                  "SineCoulombMatrix",
+                                  "BondFractions",
+                                  "BagofBonds"]:
+                    convert = structure.__dict__[featurizer]().fit(df[target])
+                elif featurizer == "SiteStatsFingerprint":
+                    convert = structure.SiteStatsFingerprint(site_featurizer=site.__dict__[value]())
                 else:
                     convert = structure.__dict__[featurizer]()
             elif featurizer in composition_featurizers:
                 # Provide by matminer to process composition(Pymatgen class).
+                if featurizer in ["OxidationStates",
+                                  "ElectronegativityDiff",
+                                  "ElectronAffinity"]:
+                    df[target] = [conversions.CompositionToOxidComposition().featurize(i)[0] for i in df[target]]
                 convert = composition.__dict__[featurizer]()
             else:
                 return False, "No featurizer available!"
             try:
-                df = convert.featurize_dataframe(df, target)
+                df = convert.featurize_dataframe(df, target, ignore_errors=True)
             except Exception as e:
                 return False, repr(e)
     df = space_check(df)

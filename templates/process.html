@@ -7,7 +7,7 @@
 
 {% block content %}
     {% if not processing and not error %}
-    <div id="preprocess" class="container">
+    <div class="container">
         <div class="row">
             <label style="font-size: xx-large">Conversion</label>
             <form class="form-horizontal" action="/job/process/" method="get">
@@ -19,7 +19,10 @@
                         <select name="target_column" class="form-control"></select>
                     </div>
                     <div class="col-lg-3">
-                        <select name="featurizer" class="form-control"></select>
+                        <select name="featurizer" class="form-control" onchange="show_value(this)"></select>
+                    </div>
+                    <div class="col-lg-3" style="display: none">
+                        <select name="value" class="form-control"></select>
                     </div>
                     <div class="col-lg-1">
                         <button class="btn btn-success" type="submit">
@@ -145,12 +148,12 @@
     <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'js/preprocess.js' %}"></script>
     <script type="text/javascript">
-        console.log({{ processing }});
-
         $(document).ready(function(){
+            // Create featurizer choices
             let selector = $("select[name='featurizer']");
             $(selector[0]).html(structureFeaturizersSelector());
             $(selector[1]).html(compositionFeaturizersSelector());
+            // Create target column choices
             let table_head = $("thead");
             let columns = table_head.find("th");
             let str = '<option>None</option>';
@@ -164,6 +167,24 @@
                     $(selector[i]).html(str)
                 }
             }
+            // Create site featurizer choices for SiteStatsFingerprint
+            let site_featurizer_choices = $("select[name='value']")[0];
+            str = "";
+            for (let i = 0; i < siteFeaturizers.length; i++) {
+                str += '<option value=' + siteFeaturizers[i] +'>' + siteFeaturizers[i] + '</option>'
+            }
+            $(site_featurizer_choices).html(str);
         });
+
+        // Display the value choices
+        function show_value(ele) {
+            let site_featurizer_choices = $("select[name='value']")[0];
+            if ($(ele).val() === "SiteStatsFingerprint"){
+                $(site_featurizer_choices).parent().removeAttr("style")
+            }
+            else {
+                $(site_featurizer_choices).parent().attr("style", "display: none")
+            }
+        }
     </script>
 {% endblock %}

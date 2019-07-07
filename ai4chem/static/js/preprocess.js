@@ -16,7 +16,6 @@ let structureFeaturizers = [
     "StructuralHeterogeneity",
     "MaximumPackingEfficiency",
     "ChemicalOrdering",
-    "StructureComposition",
     "XRDPowderPattern",
     "CGCNNFeaturizer",
     "JarvisCFID",
@@ -38,6 +37,24 @@ let compositionFeaturizers = [
     "Miedema",
     "YangSolidSolution",
     "AtomicPackingEfficiency"
+];
+let siteFeaturizers = [
+    "AGNIFingerprints",
+    "OPSiteFingerprint",
+    "CrystalNNFingerprint",
+    "VoronoiFingerprint",
+    "ChemicalSRO",
+    "GaussianSymmFunc",
+    "EwaldSiteEnergy",
+    "ChemEnvSiteFingerprint",
+    "CoordinationNumber",
+    "GeneralizedRadialDistributionFunction",
+    "AngularFourierSeries",
+    "LocalPropertyDifference",
+    "BondOrientationalParameter",
+    "SiteElementalProperty",
+    "AverageBondLength",
+    "AverageBondAngle"
 ];
 
 function compositionFeaturizersSelector() {
