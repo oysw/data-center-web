@@ -15,14 +15,17 @@
                 <input type="hidden" name="choose_data" value="{{ choose_data }}">
                 <div class="form-group">
                     <label class="col-lg-2 control-label">Featurize structure</label>
-                    <div class="col-lg-3">
+                    <div class="col-lg-2">
                         <select name="target_column" class="form-control"></select>
                     </div>
-                    <div class="col-lg-3">
+                    <div class="col-lg-2">
                         <select name="featurizer" class="form-control" onchange="show_value(this)"></select>
                     </div>
-                    <div class="col-lg-3" style="display: none">
-                        <select name="value" class="form-control"></select>
+                    <div class="col-lg-2" style="display: none">
+                        <select name="value" class="form-control" onchange="show_extra(this)"></select>
+                    </div>
+                    <div class="col-lg-2" style="display: none">
+                        <select name="extra" class="form-control"></select>
                     </div>
                     <div class="col-lg-1">
                         <button class="btn btn-success" type="submit">
@@ -174,6 +177,13 @@
                 str += '<option value=' + siteFeaturizers[i] +'>' + siteFeaturizers[i] + '</option>'
             }
             $(site_featurizer_choices).html(str);
+            // Create local environment calculator choices for average-bond-related featurizers.
+            let local_env_cal_choices = $("select[name='extra']")[0];
+            str = "";
+            for (let i = 0; i < localEnvCalculator.length; i++) {
+                str += '<option value=' + localEnvCalculator[i] +'>' + localEnvCalculator[i] + '</option>'
+            }
+            $(local_env_cal_choices).html(str);
         });
 
         // Display the value choices
@@ -184,6 +194,17 @@
             }
             else {
                 $(site_featurizer_choices).parent().attr("style", "display: none")
+            }
+        }
+
+        // Display the extra choices
+        function show_extra(ele) {
+            let local_env_cal_choices = $("select[name='extra']")[0];
+            if ($(ele).val() === "AverageBondLength" || $(ele).val() === "AverageBondAngle") {
+                $(local_env_cal_choices).parent().removeAttr("style")
+            }
+            else {
+                $(local_env_cal_choices).parent().attr("style", "display: none")
             }
         }
     </script>
