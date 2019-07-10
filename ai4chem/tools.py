@@ -10,6 +10,7 @@ from matminer.featurizers import composition
 from matminer.featurizers import conversions
 from matminer.featurizers import site
 from pymatgen.core.structure import Structure
+from pymatgen.analysis import local_env
 import plotly.offline as of
 import plotly.graph_objs as go
 import joblib
@@ -311,6 +312,7 @@ def preprocess(option, file):
         featurizer = option[0]
         target = option[1]
         value = option[2]
+        extra = option[3]
         # Rename one column of dataframe.
         if featurizer == "rename":
             try:
@@ -345,7 +347,40 @@ def preprocess(option, file):
                                   "BagofBonds"]:
                     convert = structure.__dict__[featurizer]().fit(df[target])
                 elif featurizer == "SiteStatsFingerprint":
-                    convert = structure.SiteStatsFingerprint(site_featurizer=site.__dict__[value]())
+                    if value == "CrystalNNFingerprint":
+                        [i.add_oxidation_state_by_guess() for i in df[target]]
+                        # Warning: Need further exploration!!!!!!!!
+                        fingerprint = site.CrystalNNFingerprint.from_preset("cn")
+                        # fingerprint = site.CrystalNNFingerprint.from_preset("ops")
+                        convert = structure.SiteStatsFingerprint(site_featurizer=fingerprint)
+                    elif value == "ChemEnvSiteFingerprint":
+                        # If you use the ChemEnv tool for your research,
+                        # please consider citing the following reference(s) :
+                        # =============================================================
+                        # David Waroquiers, Xavier Gonze, Gian-Marco Rignanese,
+                        # Cathrin Welker-Nieuwoudt, Frank Rosowski,
+                        # Michael Goebel, Stephan Schenk, Peter Degelmann,
+                        # Rute Andre, Robert Glaum, and Geoffroy Hautier,
+                        # "Statistical analysis of coordination environments in oxides",
+                        # Chem. Mater., 2017, 29 (19), pp 8346-8360,
+                        # DOI: 10.1021/acs.chemmater.7b02766
+                        # Warning: Need further exploration!!!!!!!!
+                        fingerprint = site.ChemEnvSiteFingerprint.from_preset("simple")
+                        # fingerprint = site.ChemEnvSiteFingerprint.from_preset("multi_weights")
+                        convert = structure.SiteStatsFingerprint(site_featurizer=fingerprint)
+                    elif value in ["GeneralizedRadialDistributionFunction",
+                                   "AngularFourierSeries"]:
+                        # Warning: Need further exploration!!!!!!!!
+                        fun = site.__dict__[value].from_preset("gaussian")
+                        # fun = site.__dict__[value].from_preset("histogram")
+                        convert = structure.SiteStatsFingerprint(site_featurizer=fun)
+                    elif value in ["AverageBondLength",
+                                   "AverageBondAngle"]:
+                        method = local_env.__dict__[extra]()
+                        fun = site.__dict__[value](method=method)
+                        convert = structure.SiteStatsFingerprint(site_featurizer=fun)
+                    else:
+                        convert = structure.SiteStatsFingerprint(site_featurizer=site.__dict__[value]())
                 else:
                     convert = structure.__dict__[featurizer]()
             elif featurizer in composition_featurizers:

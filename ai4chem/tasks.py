@@ -68,7 +68,7 @@ def featurize(option):
     Writing new table html-format code into cache.
     :return:
     """
-    job_id, featurizer, target, value, choose_data = option
+    job_id, featurizer, target, value, extra, choose_data = option
     job = Job.objects.get(id=job_id)
     if choose_data == 'raw':
         file = job.raw
@@ -76,7 +76,7 @@ def featurize(option):
         file = job.upload
     else:
         return
-    option = [featurizer, target, value]
+    option = [featurizer, target, value, extra]
     print("Process {} for job {} begin!".format(featurizer, job_id))
     mp.current_process().daemon = False
     status, df = preprocess(option, file)

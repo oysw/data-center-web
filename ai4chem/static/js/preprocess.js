@@ -43,7 +43,7 @@ let siteFeaturizers = [
     "OPSiteFingerprint",
     "CrystalNNFingerprint",
     "VoronoiFingerprint",
-    "ChemicalSRO",
+    // "ChemicalSRO",
     "GaussianSymmFunc",
     "EwaldSiteEnergy",
     "ChemEnvSiteFingerprint",
@@ -56,6 +56,23 @@ let siteFeaturizers = [
     "AverageBondLength",
     "AverageBondAngle"
 ];
+let localEnvCalculator = [
+    "BrunnerNN_real",
+    "BrunnerNN_reciprocal",
+    "BrunnerNN_relative",
+    "CovalentBondNN",
+    "Critic2NN",
+    "CrystalNN",
+    "CutOffDictNN",
+    "EconNN",
+    "JmolNN",
+    "MinimumDistanceNN",
+    "MinimumOKeeffeNN",
+    "MinimumVIRENN",
+    "OpenBabelNN",
+    "VoronoiNN"
+];
+
 
 function compositionFeaturizersSelector() {
     let html_str = "<option>None</option>";

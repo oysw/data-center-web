@@ -267,9 +267,13 @@ def process(request):
         value = request.GET["value"]
     except KeyError:
         value = ""
+    try:
+        extra = request.GET["extra"]
+    except KeyError:
+        extra = ""
     job_id = int(request.GET["job_id"])
     choose_data = request.GET['choose_data']
-    option = (job_id, featurizer, target, value, choose_data)
+    option = (job_id, featurizer, target, value, extra, choose_data)
     result = featurize.delay(option)
     cache.set("job_featurize_" + str(job_id), result, timeout=None)
     job = Job.objects.get(id=job_id)
