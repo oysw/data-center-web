@@ -49,6 +49,6 @@ urlpatterns = [
     path('logout/', views.logout),
     # Ajax
     path('submit/', views.submit),
-    path('download/', views.download_predict),
-
+    path('predict/download/', views.download_predict),
+    path('data/download/', views.download_data),
 ]

@@ -323,6 +323,12 @@ def preprocess(option, file):
                 df.columns = columns
             except Exception as e:
                 return False, repr(e)
+        # Delete one column of dataframe.
+        elif featurizer == "delete":
+            try:
+                df.drop(target, axis=1, inplace=True)
+            except Exception as e:
+                return False, repr(e)
         # Convert json format string to structure(Pymatgen class)
         elif featurizer == "strToStructure":
             try:

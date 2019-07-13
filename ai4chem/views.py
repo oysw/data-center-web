@@ -416,3 +416,38 @@ def download_predict(request):
     response['Content-Type'] = 'application/octet-stream'
     response['Content-Disposition'] = 'attachment;filename="{}"'.format(file_name)
     return response
+
+
+@login_required
+def download_data(request):
+    """
+    :param request:
+    :return:
+    """
+    job_id = int(request.GET["job_id"])
+    choose_data = request.GET["choose_data"]
+    job = Job.objects.get(id=job_id)
+    if choose_data == "upload":
+        file = job.upload
+    elif choose_data == "raw":
+        file = job.raw
+    else:
+        return StreamingHttpResponse()
+
+    def yield_file(file_n):
+        """
+        Transported by stream.
+        :param file_n:
+        :return:
+        """
+        chunk_size = 512
+        while True:
+            content = file_n.read(chunk_size)
+            if content:
+                yield content
+            else:
+                break
+    response = StreamingHttpResponse(yield_file(file))
+    response['Content-Type'] = 'application/octet-stream'
+    response['Content-Disposition'] = 'attachment;filename="{}.pkl"'.format(choose_data)
+    return response

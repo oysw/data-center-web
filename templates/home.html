@@ -66,6 +66,9 @@
                                 <a title="Data process" href="/job/process/page?choose_data=raw&job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
                                 </a>
+                                <a title="Download data" href="/data/download?choose_data=raw&job_id={{ job.id }}">
+                                    <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
+                                </a>
                                 {% if job.mod %}
                                 <a title="Plot" href="/draw/page?choose_data=raw&job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-picture" aria-hidden="true"></span>
@@ -81,6 +84,9 @@
                             {% else %}
                                 <a title="Data process" href="/job/process/page?choose_data=upload&job_id={{ job.id }}">
                                     <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+                                </a>
+                                <a title="Download data" href="/data/download?choose_data=upload&job_id={{ job.id }}">
+                                    <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
                                 </a>
                                 {% if job.mod %}
                                 <a title="Plot" href="/draw/page?choose_data=upload&job_id={{ job.id }}">
