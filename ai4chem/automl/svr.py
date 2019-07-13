@@ -10,7 +10,7 @@ reg = 0
 def f(param):
     global reg
     reg = SVR(**param, gamma="scale", cache_size=1000)
-    acc = cross_val_score(reg, x, y, cv=5, n_jobs=-1).mean()
+    acc = cross_val_score(reg, x, y, n_jobs=-1).mean()
     return {"loss": -acc, "status": STATUS_OK}
 
 

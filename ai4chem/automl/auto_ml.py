@@ -12,6 +12,8 @@ def auto_ml(x, y):
     :param y:
     :return:
     """
+    if x.shape[0] < 10:
+        raise ValueError("Training dataset is too small!")
     linear_reg, l_score = linear.calc(x, y)
     nearest_neighbors_reg, nn_score = nearest_neighbors.calc(x, y)
     random_forests_reg, rf_score = random_forests.calc(x, y)

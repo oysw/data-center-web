@@ -11,7 +11,7 @@ def f(params):
     global reg
     params['n_estimators'] = int(params['n_estimators'])
     reg = RandomForestRegressor(**params)
-    acc = cross_val_score(reg, x, y, cv=5, n_jobs=-1).mean()
+    acc = cross_val_score(reg, x, y, n_jobs=-1).mean()
     return {'loss': -acc, 'status': STATUS_OK}
 
 

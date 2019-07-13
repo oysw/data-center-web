@@ -17,7 +17,7 @@ def set_hidden_layer(param):
 def f(param):
     global reg
     reg = set_hidden_layer(param)
-    acc = cross_val_score(reg, x, y, cv=5, n_jobs=-1).mean()
+    acc = cross_val_score(reg, x, y, n_jobs=-1).mean()
     return {"loss": -acc, "status": STATUS_OK}
 
 
