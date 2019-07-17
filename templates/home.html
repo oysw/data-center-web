@@ -59,8 +59,8 @@
                         <td>{{ job.label }}</td>
                         <td>
                             {% if not job.raw %}
-                                <a title="Data upload" href="/upload/page?job_id={{ job.id }}&choose_data=raw">
-                                    <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
+                                <a title="Upload data" href="/upload/page?job_id={{ job.id }}&choose_data=raw">
+                                    <span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
                                 </a>
                             {% else %}
                                 <a title="Data process" href="/job/process/page?choose_data=raw&job_id={{ job.id }}">
@@ -78,8 +78,8 @@
                         </td>
                         <td>
                             {% if not job.upload %}
-                                <a title="Data upload" href="/upload/page?job_id={{ job.id }}&choose_data=upload">
-                                    <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
+                                <a title="Upload data" href="/upload/page?job_id={{ job.id }}&choose_data=upload">
+                                    <span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
                                 </a>
                             {% else %}
                                 <a title="Data process" href="/job/process/page?choose_data=upload&job_id={{ job.id }}">

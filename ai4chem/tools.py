@@ -15,6 +15,7 @@ import plotly.offline as of
 import plotly.graph_objs as go
 import joblib
 from django.core.cache import cache
+from django.utils.crypto import get_random_string
 from ai4chem.models import Job
 
 structure_featurizers = [
@@ -335,11 +336,41 @@ def preprocess(option, file):
                 df[target] = [Structure.from_str(i, 'json') for i in df[target]]
             except Exception as e:
                 return False, repr(e)
+        elif featurizer in conversions_utils:
+            comp_related = ["StrToComposition", "StructureToComposition"]
+            if featurizer in comp_related:
+                if "composition" in list(df.columns):
+                    original_col = df["composition"]
+                    original_index = list(df.columns).index("composition")
+                    df = conversions.__dict__[featurizer](overwrite_data=True).featurize_dataframe(df, target)
+                    col = list(df.columns)
+                    if value == "":
+                        col[col.index("composition")] = "composition_" + get_random_string(7)
+                    else:
+                        if value in col:
+                            col[col.index("composition")] = value + "_" + get_random_string(7)
+                        else:
+                            col[col.index("composition")] = value
+                    df.columns = col
+                    df.insert(original_index, "composition", original_col)
+                else:
+                    df = conversions.__dict__[featurizer]().featurize_dataframe(df, target)
+                    if value == "":
+                        pass
+                    else:
+                        col = list(df.columns)
+                        if value in col:
+                            col[col.index("composition")] = value + "_" + get_random_string(7)
+                        else:
+                            col[col.index("composition")] = value
+                        df.columns = col
+            else:
+                try:
+                    df = conversions.__dict__[featurizer](overwrite_data=True).featurize_dataframe(df, target)
+                except Exception as e:
+                    return False, repr(e)
         else:
-            # Convert structure(Pymatgen class) to composition(Pymatgen class)
-            if featurizer in conversions_utils:
-                convert = conversions.__dict__[featurizer]()
-            elif featurizer in structure_featurizers:
+            if featurizer in structure_featurizers:
                 # Provided by matminer to process structure(Pymatgen class).
                 if featurizer in ["ElectronicRadialDistributionFunction",
                                   "EwaldEnergy",

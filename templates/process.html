@@ -22,13 +22,13 @@
                         <select name="featurizer" class="form-control" onchange="show_value(this)"></select>
                     </div>
                     <div class="col-lg-2" style="display: none">
-                        <select name="value" class="form-control" onchange="show_extra(this)"></select>
+                        <select title="Fingerprint type" name="value" class="form-control" onchange="show_extra(this)"></select>
                     </div>
                     <div class="col-lg-2" style="display: none">
-                        <select name="extra" class="form-control"></select>
+                        <select title="Method for calculation" name="extra" class="form-control"></select>
                     </div>
                     <div class="col-lg-1">
-                        <button class="btn btn-success" type="submit">
+                        <button title="convert" class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -46,7 +46,7 @@
                         <select name="featurizer" class="form-control"></select>
                     </div>
                     <div class="col-lg-1">
-                        <button class="btn btn-success" type="submit">
+                        <button title="convert" class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -61,11 +61,11 @@
                     <div class="col-lg-3">
                         <select name="target_column" class="form-control"></select>
                     </div>
-                    <div class="col-lg-4">
+                    <div class="col-lg-3">
                         <input class="form-control" name="value">
                     </div>
                     <div class="col-lg-1">
-                        <button class="btn btn-success" type="submit">
+                        <button title="convert" class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -81,7 +81,7 @@
                         <select name="target_column" class="form-control"></select>
                     </div>
                     <div class="col-lg-1">
-                        <button class="btn btn-success" type="submit">
+                        <button title="convert" class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -93,11 +93,11 @@
                 <div class="form-group">
                     <label class="col-lg-3 control-label">Convert string to structure:</label>
                     <input type="hidden" name="featurizer" value="strToStructure">
-                    <div class="col-lg-4">
+                    <div class="col-lg-3">
                         <select name="target_column" class="form-control"></select>
                     </div>
                     <div class="col-lg-2">
-                        <button class="btn btn-success" type="submit">
+                        <button title="convert" class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -109,11 +109,14 @@
                 <div class="form-group">
                     <label class="col-lg-3 control-label">Convert string to composition:</label>
                     <input type="hidden" name="featurizer" value="StrToComposition">
-                    <div class="col-lg-4">
+                    <div class="col-lg-3">
                         <select name="target_column" class="form-control"></select>
                     </div>
+                    <div class="col-lg-3">
+                        <input data-toggle="tooltip" name="value" class="form-control" placeholder="Default: composition">
+                    </div>
                     <div class="col-lg-2">
-                        <button class="btn btn-success" type="submit">
+                        <button title="convert" class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -125,11 +128,14 @@
                 <div class="form-group">
                     <label class="col-lg-3 control-label">Convert structure to composition:</label>
                     <input type="hidden" name="featurizer" value="StructureToComposition">
-                    <div class="col-lg-4">
+                    <div class="col-lg-3">
                         <select name="target_column" class="form-control"></select>
                     </div>
+                    <div class="col-lg-3">
+                        <input data-toggle="tooltip" name="value" class="form-control" placeholder="Default: composition">
+                    </div>
                     <div class="col-lg-2">
-                        <button class="btn btn-success" type="submit">
+                        <button title="convert" class="btn btn-success" type="submit">
                             <span class="glyphicon glyphicon-play"></span>
                         </button>
                     </div>
@@ -162,7 +168,9 @@
         </div>
     </div>
     {% elif error %}
-        <div class="alert alert-danger" role="alert">{{ error }}</div>
+        <div class="alert alert-danger" role="alert" style="text-align: center">
+            {{ error }}
+        </div>
     {% endif %}
     <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
     <script src="{% static 'js/preprocess.js' %}"></script>
@@ -200,6 +208,13 @@
                 str += '<option value=' + localEnvCalculator[i] +'>' + localEnvCalculator[i] + '</option>'
             }
             $(local_env_cal_choices).html(str);
+            // Create tooltip for featurizers
+            $('[data-toggle="tooltip"]').tooltip({
+                placement: "top",
+                trigger: "focus",
+                html: true,
+                title: '<strong>Warning: </strong> Random 7-digit letters will be added if new name exists.',
+            })
         });
 
         // Display the value choices
@@ -222,6 +237,10 @@
             else {
                 $(local_env_cal_choices).parent().attr("style", "display: none")
             }
+        }
+
+        function show_tips() {
+
         }
     </script>
 {% endblock %}

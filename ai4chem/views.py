@@ -273,6 +273,14 @@ def process(request):
         extra = ""
     job_id = int(request.GET["job_id"])
     choose_data = request.GET['choose_data']
+    if target == "None":
+        return_dict = {
+            'job_id': job_id,
+            'choose_data': choose_data,
+            'html': cache.get(str(job_id) + "_" + choose_data + "_html_graph"),
+            'error': "No target column selected!"
+        }
+        return render(request, 'process.html', return_dict)
     option = (job_id, featurizer, target, value, extra, choose_data)
     result = featurize.delay(option)
     cache.set("job_featurize_" + str(job_id), result, timeout=None)
