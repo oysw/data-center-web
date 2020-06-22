@@ -189,14 +189,6 @@ def upload(request):
         return_dict['error'] = 'Please choose a file!'
         return render(request, 'upload.html', return_dict)
     job = Job.objects.get(id=job_id)
-    status, df = preprocess([], file)
-    if status:
-        file = File(BytesIO())
-        df.to_pickle(file, compression=None)
-        file.name = get_random_string(7) + '.pkl'
-    else:
-        return_dict['error'] = df
-        return render(request, 'upload.html', return_dict)
     # Save the file according to its type.
     if choose_data == 'raw':
         job.raw = file
@@ -206,6 +198,21 @@ def upload(request):
         return_dict['error'] = 'Unexpect error!'
         return render(request, 'upload.html', return_dict)
     job.save()
+    # Now the file has its path on disk.
+    job = Job.objects.get(id=job_id)
+    if choose_data == 'raw':
+        file = job.raw
+    elif choose_data == 'upload':
+        file = job.upload
+    file.open("rb+")
+    status, df = preprocess([], file)
+    if status:
+        file.seek(0)
+        df.to_pickle(file, compression=None)
+        job.save()
+    else:
+        return_dict['error'] = df
+        return render(request, 'upload.html', return_dict)
     return home(request)
 
 

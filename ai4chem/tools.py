@@ -292,21 +292,15 @@ def preprocess(option, file):
     """
     try:
         # The file may be json, csv and pickle format.
-        file.seek(0)
-        df = pd.read_pickle(file, compression=None)
-    except Exception as e:
-        print(e)
-        try:
-            file.seek(0)
+        file_suffix = file.name.split(".")[-1]
+        if file_suffix == "pkl":
+            df = pd.read_pickle(file, compression=None)
+        elif file_suffix == "csv":
+            df = pd.read_csv(file)
+        elif file_suffix == "json":
             df = pd.read_json(file)
-        except ValueError:
-            try:
-                file.seek(0)
-                df = pd.read_csv(file)
-            except Exception as e:
-                return False, repr(e)
-    finally:
-        file.close()
+    except Exception as e:
+        return False, repr(e)   
     if not option:
         df = df.dropna(axis=0, how="all").dropna(axis=1)
     else:
